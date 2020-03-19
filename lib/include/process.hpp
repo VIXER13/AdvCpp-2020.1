@@ -12,6 +12,7 @@ class Process {
     std::array<int, 2> fd_in  = {-1, -1},
                        fd_out = {-1, -1};
     pid_t pid = -1;
+    bool readable = false;
 
  public:
     explicit Process(const std::string& path);

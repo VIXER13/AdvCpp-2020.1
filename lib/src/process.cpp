@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <iostream>
 
 namespace process_lib {
 
@@ -25,6 +26,8 @@ Process::Process(const std::string& path) {
             close();
             throw ProcessException{"Execl failed"};
         }
+    } else {
+        readable = true;
     }
 }
 
@@ -55,7 +58,14 @@ void Process::writeExact(const void* data, size_t len) {
 }
 
 size_t Process::read(void* data, size_t len) {
-    return ::read(fd_out[READ], data, len);
+    ssize_t temp = ::read(fd_out[READ], data, len);
+    for(size_t i = 0; i < len; ++i) {
+        if (static_cast<char*>(data)[i] == '\0') {
+            readable = false;
+            break;
+        }
+    }
+    return temp;
 }
 
 void Process::readExact(void* data, size_t len) {
@@ -73,10 +83,7 @@ void Process::readExact(void* data, size_t len) {
 }
 
 bool Process::isReadable() const {
-    
-    struct stat buff = {};
-    fstat(fd_out[READ], &buff);
-    return buff.st_blksize;
+    return readable;
 }
 
 void Process::closeStdin() {
@@ -88,6 +95,7 @@ void Process::close() {
     closeStdin();
     ::close(fd_out[READ]);
     ::close(fd_out[WRITE]);
+    readable = false;
 }
 
 }
