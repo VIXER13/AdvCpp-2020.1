@@ -5,8 +5,12 @@
 #include <array>
 #include <exception>
 
+namespace process_lib {
+
 class Process {
-    std::array<int, 2> fd = {-1, -1};
+    enum : size_t {READ = 0, WRITE = 1};
+    std::array<int, 2> fd_in  = {-1, -1},
+                       fd_out = {-1, -1};
     pid_t pid = -1;
 
  public:
@@ -22,8 +26,6 @@ class Process {
     void closeStdin();
 
     void close();
-
-    pid_t getPid() const noexcept;
 };
 
 class ProcessException : public std::exception {
@@ -34,8 +36,10 @@ class ProcessException : public std::exception {
         message(str) {}
 
     const char* what() const noexcept override {
-        return message.data();
+        return message.c_str();
     }
 };
 
-#endif
+}
+
+#endif // PROCESS_HPP

@@ -4,6 +4,6 @@
 #include "process.hpp"
 
 void printMenu();
-bool simpleDialog(Process& proc);
+bool simpleDialog(process_lib::Process& proc);
 
-#endif
+#endif // SIMPLE_DIALOG_HPP

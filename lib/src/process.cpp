@@ -3,20 +3,26 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 
+namespace process_lib {
+
 Process::Process(const std::string& path) {
-    if (pipe(fd.data()) < 0) {
+    if (pipe(fd_in.data()) < 0 || pipe(fd_out.data()) < 0) {
+        close();
         throw ProcessException{"Pipes failed"};
     }
 
     pid = fork();
     if (pid < 0) {
+        close();
         throw ProcessException{"Fork failed"};
     } else if (!pid) {
-        if (dup2(fd[0], 0) < 0 || dup2(fd[1], 1) < 0) {
+        if (dup2(fd_in[READ], STDIN_FILENO) < 0 || dup2(fd_out[WRITE], STDOUT_FILENO) < 0) {
+            close();
             throw ProcessException{"Dup2 failed"};
         }
 
-        if (execl(path.data(), path.data(), nullptr) < 0) {
+        if (execl(path.c_str(), path.c_str(), nullptr) < 0) {
+            close();
             throw ProcessException{"Execl failed"};
         }
     }
@@ -31,13 +37,13 @@ Process::~Process() {
 }
 
 size_t Process::write(const void* data, size_t len) {
-    return ::write(fd[1], data, len);
+    return ::write(fd_in[WRITE], data, len);
 }
 
 void Process::writeExact(const void* data, size_t len) {
     size_t recorded = 0;
     while (true) {
-        ssize_t write_out = ::write(fd[1], static_cast<const int8_t*>(data) + recorded, len - recorded);
+        auto write_out = ssize_t(write(static_cast<const int8_t*>(data) + recorded, len - recorded));
         if (write_out < 0) {
             throw ProcessException{"WriteExact error"};
         }
@@ -49,13 +55,13 @@ void Process::writeExact(const void* data, size_t len) {
 }
 
 size_t Process::read(void* data, size_t len) {
-    return ::read(fd[0], data, len);
+    return ::read(fd_out[READ], data, len);
 }
 
 void Process::readExact(void* data, size_t len) {
     size_t readed = 0;
     while (true) {
-        ssize_t read_out = ::read(fd[0], static_cast<int8_t*>(data) + readed, len - readed);
+        auto read_out = ssize_t(read(static_cast<int8_t*>(data) + readed, len - readed));
         if (read_out == -1) {
             throw ProcessException{"ReadExact error"};
         }
@@ -67,20 +73,21 @@ void Process::readExact(void* data, size_t len) {
 }
 
 bool Process::isReadable() const {
+    
     struct stat buff = {};
-    fstat(fd[0], &buff);
+    fstat(fd_out[READ], &buff);
     return buff.st_blksize;
 }
 
 void Process::closeStdin() {
-    ::close(fd[1]);
+    ::close(fd_in[READ]);
+    ::close(fd_in[WRITE]);
 }
 
 void Process::close() {
-    ::close(fd[0]);
-    ::close(fd[1]);
+    closeStdin();
+    ::close(fd_out[READ]);
+    ::close(fd_out[WRITE]);
 }
 
-pid_t Process::getPid() const noexcept {
-    return pid;
 }
