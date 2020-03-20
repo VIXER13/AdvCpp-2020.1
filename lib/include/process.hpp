@@ -2,15 +2,14 @@
 #define PROCESS_HPP
 
 #include <string>
-#include <array>
 #include <exception>
 
 namespace process_lib {
 
 class Process {
-    enum : size_t {READ = 0, WRITE = 1};
-    std::array<int, 2> fd_in  = {-1, -1},
-                       fd_out = {-1, -1};
+    struct {
+        int read = -1, write = -1;
+    } fd_in, fd_out;
     pid_t pid = -1;
     bool readable = false;
 
@@ -41,6 +40,6 @@ class ProcessException : public std::exception {
     }
 };
 
-}
+}  // namespace process_lib
 
-#endif // PROCESS_HPP
+#endif  // PROCESS_HPP

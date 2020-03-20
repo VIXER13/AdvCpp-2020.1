@@ -6,4 +6,4 @@
 void printMenu();
 bool simpleDialog(process_lib::Process& proc);
 
-#endif // SIMPLE_DIALOG_HPP
+#endif  // SIMPLE_DIALOG_HPP

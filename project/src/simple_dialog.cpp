@@ -22,11 +22,7 @@ bool simpleDialog(process_lib::Process& proc) {
         std::cout << "Write string:";
         std::cin >> str;
         size_t len_write = proc.write(str.c_str(), str.size());
-        if (len_write == std::string::npos) {
-            std::cerr << "Write error" << std::endl;
-        } else {
-            std::cout << "len_write = " << len_write << std::endl;
-        }
+        std::cout << "len_write = " << len_write << std::endl;
     } else if (choice == 2) {
         if (proc.isReadable()) {
             size_t len = 0;
