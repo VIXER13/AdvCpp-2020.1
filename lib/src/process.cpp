@@ -7,26 +7,32 @@
 namespace process_lib {
 
 Process::Process(const std::string& path) {
-    if (pipe(reinterpret_cast<int*>(&fd_in)) < 0 || pipe(reinterpret_cast<int*>(&fd_out)) < 0) {
-        close();
+    std::array<int, 2> fd_in = {-1, -1}, fd_out = {-1, -1};
+    if (pipe(fd_in.data()) < 0 || pipe(fd_out.data()) < 0) {
+        closeAllPipes(fd_in, fd_out);
         throw ProcessException{"Pipes failed"};
     }
 
     pid = fork();
     if (pid < 0) {
-        close();
+        closeAllPipes(fd_in, fd_out);
         throw ProcessException{"Fork failed"};
     } else if (!pid) {
-        if (dup2(fd_in.read, STDIN_FILENO) < 0 || dup2(fd_out.write, STDOUT_FILENO) < 0) {
-            close();
+        if (dup2(fd_in[0], STDIN_FILENO) < 0 || dup2(fd_out[1], STDOUT_FILENO) < 0) {
+            closeAllPipes(fd_in, fd_out);
             throw ProcessException{"Dup2 failed"};
         }
+        closeAllPipes(fd_in, fd_out);
 
         if (execl(path.c_str(), path.c_str(), nullptr) < 0) {
             close();
             throw ProcessException{"Execl failed"};
         }
     } else {
+        write_in = fd_in[1];
+        read_out = fd_out[0];
+        ::close(fd_in[0]);
+        ::close(fd_out[1]);
         readable = true;
     }
 }
@@ -40,7 +46,7 @@ Process::~Process() {
 }
 
 size_t Process::write(const void* data, size_t len) {
-    ssize_t temp = ::write(fd_in.write, data, len);
+    ssize_t temp = ::write(write_in, data, len);
     if (temp == -1) {
         throw ProcessException{"Write error"};
     }
@@ -58,8 +64,9 @@ void Process::writeExact(const void* data, size_t len) {
 }
 
 size_t Process::read(void* data, size_t len) {
-    ssize_t temp = ::read(fd_out.read, data, len);
+    ssize_t temp = ::read(read_out, data, len);
     if (temp == -1) {
+        readable = false;
         throw ProcessException{"Read error"};
     }
     for (size_t i = 0; i < len; ++i) {
@@ -86,15 +93,20 @@ bool Process::isReadable() const {
 }
 
 void Process::closeStdin() {
-    ::close(fd_in.read);
-    ::close(fd_in.write);
+    ::close(write_in);
 }
 
 void Process::close() {
     closeStdin();
-    ::close(fd_out.read);
-    ::close(fd_out.write);
+    ::close(read_out);
     readable = false;
+}
+
+void Process::closeAllPipes(const std::array<int, 2>& fd_in, const std::array<int, 2>& fd_out) const {
+    ::close(fd_in[0]);
+    ::close(fd_in[1]);
+    ::close(fd_out[0]);
+    ::close(fd_out[1]);
 }
 
 }  // namespace process_lib
