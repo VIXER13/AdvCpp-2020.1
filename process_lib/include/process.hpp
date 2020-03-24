@@ -2,13 +2,13 @@
 #define PROCESS_HPP
 
 #include <string>
-#include <array>
 #include <exception>
+#include "descriptor.hpp"
 
 namespace process_lib {
 
 class Process {
-    int write_in = -1, read_out = -1;
+    Descriptor write_in, read_out;
     pid_t pid = -1;
     bool readable = false;
 
@@ -25,9 +25,6 @@ class Process {
     void closeStdin();
 
     void close();
-
- private:
-    void closeAllPipes(const std::array<int, 2>& fd_in, const std::array<int, 2>& fd_out) const;
 };
 
 class ProcessException : public std::exception {

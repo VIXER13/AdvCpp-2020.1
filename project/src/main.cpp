@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
         try {
             process_lib::Process proc(argv[1]);
             printMenu();
-
+            signal(SIGPIPE, SIG_IGN);
             while (true) {
                 try {
                     if (!simpleDialog(proc))
