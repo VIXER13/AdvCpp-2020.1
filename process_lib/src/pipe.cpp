@@ -8,8 +8,8 @@ Pipe::Pipe() {
     if(pipe(fds.data()) < 0) {
         throw ProcessException{"Pipes failed"};
     }
-    fds_[0] = std::move(Descriptor(fds[0]));
-    fds_[1] = std::move(Descriptor(fds[1]));
+    fds_[0] = Descriptor(fds[0]);
+    fds_[1] = Descriptor(fds[1]);
 }
 
 Pipe::Pipe(Pipe&& other) noexcept {
@@ -26,8 +26,8 @@ void Pipe::move(Pipe&& other) noexcept {
     fds_[1] = std::move(other.fds_[1]);
 }
 
-Descriptor& Pipe::getDescriptor(const size_t i) noexcept {
-    return fds_[i];
+Descriptor& Pipe::getDescriptor(const Side side) noexcept {
+    return fds_[size_t(side)];
 }
 
 }

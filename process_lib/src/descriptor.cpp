@@ -7,25 +7,26 @@ Descriptor::Descriptor(const int fd) noexcept :
     fd_(fd) {}
 
 Descriptor::Descriptor(Descriptor&& other) noexcept {
-    move(std::move(other));
+    std::swap(fd_, other.fd_);
+    other.close();
 }
 
 Descriptor& Descriptor::operator=(Descriptor&& other) noexcept {
-    move(std::move(other));
+    std::swap(fd_, other.fd_);
+    other.close();
     return *this;
 }
 
 Descriptor::~Descriptor() noexcept {
-    close(fd_);
+    close();
 }
 
 Descriptor::operator int() const noexcept {
     return fd_;
 }
 
-void Descriptor::move(Descriptor&& other) noexcept {
-    fd_ = other.fd_;
-    other.fd_ = -1;
+void Descriptor::close() noexcept {
+    ::close(fd_);
 }
 
 }  // namespace process_lib

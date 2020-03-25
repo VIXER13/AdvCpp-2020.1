@@ -8,7 +8,7 @@ namespace process_lib {
 
 class Descriptor {
     int fd_ = -1;
-    void move(Descriptor&& other) noexcept;
+    //void move(Descriptor&& other) noexcept;
 
  public:
     explicit Descriptor() = default;
@@ -19,6 +19,8 @@ class Descriptor {
     Descriptor& operator=(Descriptor&& other) noexcept;
     ~Descriptor() noexcept;
     operator int() const noexcept;
+    
+    void close() noexcept;
 };
 
 class ProcessException : public std::exception {

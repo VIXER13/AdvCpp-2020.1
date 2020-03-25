@@ -14,7 +14,8 @@ Process::Process(const std::string& path) {
     if (pid < 0) {
         throw ProcessException{"Fork failed"};
     } else if (!pid) {
-        if (dup2(fd_in.getDescriptor(0), STDIN_FILENO) < 0 || dup2(fd_out.getDescriptor(1), STDOUT_FILENO) < 0) {
+        if (dup2(fd_in .getDescriptor(Pipe::Side::READ ),  STDIN_FILENO) < 0 || 
+            dup2(fd_out.getDescriptor(Pipe::Side::WRITE), STDOUT_FILENO) < 0) {
             throw ProcessException{"Dup2 failed"};
         }
 
@@ -22,8 +23,8 @@ Process::Process(const std::string& path) {
             throw ProcessException{"Execl failed"};
         }
     } else {
-        write_in = std::move(fd_in.getDescriptor(1));
-        read_out = std::move(fd_out.getDescriptor(0));
+        write_in = std::move(fd_in.getDescriptor(Pipe::Side::WRITE));
+        read_out = std::move(fd_out.getDescriptor(Pipe::Side::READ));
         readable = true;
     }
 }
@@ -79,12 +80,12 @@ bool Process::isReadable() const {
 }
 
 void Process::closeStdin() {
-    ::close(write_in);
+    write_in.close();
 }
 
 void Process::close() {
     closeStdin();
-    ::close(read_out);
+    read_out.close();
     readable = false;
 }
 
