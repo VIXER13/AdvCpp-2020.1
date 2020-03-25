@@ -21,6 +21,7 @@ class BaseLogger {
     Level level() const noexcept;
 
     virtual void flush() = 0;
+    virtual ~BaseLogger() noexcept = default;
 
  protected:
     inline static const std::array<std::string, 4> message_level = {"DEBUG: ", "INFO: ", "WARNING: ", "ERROR: "};
