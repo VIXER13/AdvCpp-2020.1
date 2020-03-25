@@ -8,16 +8,13 @@
 namespace process_lib {
 
 Process::Process(const std::string& path) {
-    std::array<Descriptor, 2> fd_in, fd_out;
-    if (pipe(reinterpret_cast<int*>(fd_in.data())) < 0 || pipe(reinterpret_cast<int*>(fd_out.data())) < 0) {
-        throw ProcessException{"Pipes failed"};
-    }
+    Pipe fd_in, fd_out;
 
     pid = fork();
     if (pid < 0) {
         throw ProcessException{"Fork failed"};
     } else if (!pid) {
-        if (dup2(fd_in[0], STDIN_FILENO) < 0 || dup2(fd_out[1], STDOUT_FILENO) < 0) {
+        if (dup2(fd_in.getDescriptor(0), STDIN_FILENO) < 0 || dup2(fd_out.getDescriptor(1), STDOUT_FILENO) < 0) {
             throw ProcessException{"Dup2 failed"};
         }
 
@@ -25,8 +22,8 @@ Process::Process(const std::string& path) {
             throw ProcessException{"Execl failed"};
         }
     } else {
-        write_in = std::move(fd_in[1]);
-        read_out = std::move(fd_out[0]);
+        write_in = std::move(fd_in.getDescriptor(1));
+        read_out = std::move(fd_out.getDescriptor(0));
         readable = true;
     }
 }
@@ -61,12 +58,8 @@ size_t Process::read(void* data, size_t len) {
     ssize_t temp = ::read(read_out, data, len);
     if (temp == -1) {
         throw ProcessException{"Read error"};
-    }
-    for (size_t i = 0; i < len; ++i) {
-        if (static_cast<char*>(data)[i] == EOF) {
-            readable = false;
-            break;
-        }
+    } else if (temp == 0 && len > 0) {
+        readable = false;
     }
     return temp;
 }

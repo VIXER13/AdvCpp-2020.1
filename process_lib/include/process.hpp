@@ -1,9 +1,7 @@
 #ifndef PROCESS_HPP
 #define PROCESS_HPP
 
-#include <string>
-#include <exception>
-#include "descriptor.hpp"
+#include "pipe.hpp"
 
 namespace process_lib {
 
@@ -25,18 +23,6 @@ class Process {
     void closeStdin();
 
     void close();
-};
-
-class ProcessException : public std::exception {
-    std::string message;
-
- public:
-    explicit ProcessException(const std::string& str) :
-        message(str) {}
-
-    const char* what() const noexcept override {
-        return message.c_str();
-    }
 };
 
 }  // namespace process_lib
