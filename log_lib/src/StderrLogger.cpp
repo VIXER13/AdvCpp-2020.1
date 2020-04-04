@@ -12,7 +12,7 @@ void StderrLogger::flush() {
 
 void StderrLogger::log(const std::string& str, const Level lvl) {
     if (lvl >= level()) {
-        std::cerr << message_level[size_t(lvl)] << str << '\n';
+        std::cerr << get_prefix(lvl) << str << '\n';
     }
 }
 

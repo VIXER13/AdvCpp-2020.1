@@ -29,4 +29,8 @@ Level BaseLogger::level() const noexcept {
     return level_;
 }
 
+const std::string& BaseLogger::get_prefix(const Level lvl) const noexcept {
+    return message_level_.at(lvl);
+}
+
 }  // namespace logger

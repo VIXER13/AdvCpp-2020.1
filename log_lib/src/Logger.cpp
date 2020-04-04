@@ -2,35 +2,26 @@
 #include "StdoutLogger.hpp"
 #include "StderrLogger.hpp"
 #include "FileLogger.hpp"
-#include <memory>
+
+#include <iostream>
 
 namespace logger {
 
-class Logger {
-    std::unique_ptr<BaseLogger> global_logger_;
+Logger::Logger() :
+    global_logger_(std::make_unique<StdoutLogger>()) {}
 
-    Logger() :
-        global_logger_(std::make_unique<StdoutLogger>()) {}
+Logger& Logger::get_instance() {
+    static Logger logger;
+    return logger;
+}
 
-    Logger(const Logger&) = delete;
-    Logger(Logger&&) = delete;
-    Logger& operator=(const Logger&) = delete;
-    Logger& operator=(Logger&&) = delete;
+std::unique_ptr<BaseLogger>& Logger::get_global_logger() noexcept {
+    return global_logger_;
+}
 
- public:
-    static Logger& get_instance() {
-        static Logger logger;
-        return logger;
-    }
-
-    std::unique_ptr<BaseLogger>& get_global_logger() noexcept {
-        return global_logger_;
-    }
-
-    void set_global_logger(std::unique_ptr<BaseLogger>&& other) {
-        global_logger_ = std::move(other);
-    }
-};
+void Logger::set_global_logger(std::unique_ptr<BaseLogger> other) {
+    global_logger_ = std::move(other);
+}
 
 void create_stdout_logger(const Level lvl) {
     Logger::get_instance().set_global_logger(std::make_unique<StdoutLogger>(lvl));

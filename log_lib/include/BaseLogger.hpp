@@ -1,7 +1,7 @@
 #ifndef BASE_LOGGER_HPP
 #define BASE_LOGGER_HPP
 
-#include <array>
+#include <map>
 #include <string>
 #include <exception>
 
@@ -24,23 +24,27 @@ class BaseLogger {
     virtual ~BaseLogger() noexcept = default;
 
  protected:
-    inline static const std::array<std::string, 4> message_level = {"DEBUG: ", "INFO: ", "WARNING: ", "ERROR: "};
+    const std::string& get_prefix(const Level lvl) const noexcept;
 
  private:
     Level level_ = Level::INFO;
+    inline static const std::map<Level, std::string> message_level_ = {{Level::DEBUG,   "DEBUG: "  },
+                                                                       {Level::INFO,    "INFO: "   },
+                                                                       {Level::WARNING, "WARNING: "},
+                                                                       {Level::ERROR,   "ERROR: "  }};
 
     virtual void log(const std::string& str, const Level lvl) = 0;
 };
 
 class LoggerException : public std::exception {
-    std::string message;
+    std::string message_;
 
  public:
     explicit LoggerException(const std::string& str) :
-        message(str) {}
+        message_(str) {}
 
     const char* what() const noexcept override {
-        return message.c_str();
+        return message_.c_str();
     }
 };
 

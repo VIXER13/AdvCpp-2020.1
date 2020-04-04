@@ -3,15 +3,15 @@
 namespace logger {
 
 FileLogger::FileLogger(const std::string& path, const Level lvl) :
-    BaseLogger(lvl), fout(path) {}
+    BaseLogger(lvl), fout_(path) {}
 
 void FileLogger::flush() {
-    fout << std::flush;
+    fout_ << std::flush;
 }
 
 void FileLogger::log(const std::string& str, const Level lvl) {
     if (lvl >= level()) {
-        fout << message_level[size_t(lvl)] << str << '\n';
+        fout_ << get_prefix(lvl) << str << '\n';
     }
 }
 

@@ -13,7 +13,7 @@ class FileLogger : public BaseLogger {
     void flush() override;
 
  private:
-    std::ofstream fout;
+    std::ofstream fout_;
     void log(const std::string& str, const Level lvl) override;
 };
 
