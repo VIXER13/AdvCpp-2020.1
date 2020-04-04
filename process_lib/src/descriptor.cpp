@@ -26,7 +26,7 @@ Descriptor::operator int() const noexcept {
 }
 
 void Descriptor::close() noexcept {
-    if (fd_ < 0) {
+    if (fd_ != -1) {
         ::close(fd_);
         fd_ = -1;
     }

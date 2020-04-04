@@ -12,9 +12,9 @@ class Server {
  public:
     Server(const char* addr, const uint16_t port, const int max_connection = 1);
     Server(const Server&) = delete;
-    Server(Server&& other) = delete;
+    Server(Server&& other);
     Server& operator=(const Server&) = delete;
-    Server& operator=(Server&& other) = delete;
+    Server& operator=(Server&& other);
     ~Server() noexcept;
 
     void close() noexcept;

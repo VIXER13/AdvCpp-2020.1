@@ -10,6 +10,17 @@ Server::Server(const char* addr, const uint16_t port, const int max_connection) 
     set_max_connect(max_connection);
 }
 
+Server::Server(Server&& other) {
+    fd_ = std::move(other.fd_);
+    opened_ = other.opened_;
+}
+
+Server& Server::operator=(Server&& other) {
+    fd_ = std::move(other.fd_);
+    opened_ = other.opened_;
+    return *this;
+}
+
 Server::~Server() noexcept {
     close();
 }
@@ -26,7 +37,7 @@ bool Server::is_opened() const noexcept {
 Connection Server::accept() {
     sockaddr_in client = {};
     socklen_t addr_size = sizeof(client);
-    process_lib::Descriptor fd = process_lib::Descriptor(::accept(fd_, reinterpret_cast<sockaddr*>(&client), &addr_size));
+    auto fd = process_lib::Descriptor(::accept(fd_, reinterpret_cast<sockaddr*>(&client), &addr_size));
     if (fd < 0) {
         throw TcpException("Accept failed");
     }
