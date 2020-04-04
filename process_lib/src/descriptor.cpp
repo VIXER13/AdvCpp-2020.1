@@ -26,7 +26,10 @@ Descriptor::operator int() const noexcept {
 }
 
 void Descriptor::close() noexcept {
-    ::close(fd_);
+    if (fd_ < 0) {
+        ::close(fd_);
+        fd_ = -1;
+    }
 }
 
 }  // namespace process_lib
