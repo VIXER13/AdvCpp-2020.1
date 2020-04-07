@@ -17,13 +17,13 @@ class Logger {
 
  public:
     static Logger& get_instance();
-    std::unique_ptr<BaseLogger>& get_global_logger() noexcept;
+    BaseLogger& get_global_logger() noexcept;
     void set_global_logger(std::unique_ptr<BaseLogger> other);
 };
 
-void create_stdout_logger(const Level lvl);
-void create_stderr_logger(const Level lvl);
-void create_file_logger(const std::string& path, const Level lvl);
+std::unique_ptr<BaseLogger> create_stdout_logger(const Level lvl);
+std::unique_ptr<BaseLogger> create_stderr_logger(const Level lvl);
+std::unique_ptr<BaseLogger> create_file_logger(const std::string& path, const Level lvl);
 
 void debug(const std::string& str);
 void info(const std::string& str);

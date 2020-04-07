@@ -46,10 +46,10 @@ void logger_init(int argc, char *const *argv) {
     }
 
     if (!path.empty()) {
-        logger::create_file_logger(path, lvl);
+        logger::Logger::get_instance().set_global_logger(logger::create_file_logger(path, lvl));
     } else if (stderr_quest) {
-        logger::create_stderr_logger(lvl);
+        logger::Logger::get_instance().set_global_logger(logger::create_stderr_logger(lvl));
     } else {
-        logger::create_stdout_logger(lvl);
+        logger::Logger::get_instance().set_global_logger(logger::create_stdout_logger(lvl));
     }
 }
