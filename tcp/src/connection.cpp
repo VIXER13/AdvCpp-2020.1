@@ -7,7 +7,7 @@
 
 namespace tcp {
 
-Connection::Connection(const char* addr, const uint16_t port) {
+Connection::Connection(const std::string& addr, const uint16_t port) {
     fd_ = process_lib::Descriptor(socket(PF_INET, SOCK_STREAM, 0));
     if (fd_ < 0) {
         throw TcpException{"Error socket"};
@@ -24,25 +24,14 @@ Connection::Connection(process_lib::Descriptor&& fd, const sockaddr_in& sock_inf
     }
 }
 
-Connection::Connection(Connection&& other) noexcept {
-    fd_ = std::move(other.fd_);
-    opened_ = other.opened_;
-}
-
-Connection& Connection::operator=(Connection&& other) noexcept {
-    fd_ = std::move(other.fd_);
-    opened_ = other.opened_;
-    return *this;
-}
-
 Connection::~Connection() noexcept {
     close();
 }
 
-void Connection::connect(const char* addr, const uint16_t port) {
+void Connection::connect(const std::string& addr, const uint16_t port) {
     sockaddr_in sock = {.sin_family = PF_INET,
                         .sin_port   = htons(port)};
-    if (inet_aton(addr, &sock.sin_addr) == 0) {
+    if (inet_aton(addr.data(), &sock.sin_addr) == 0) {
         throw TcpException{"Wrong address"};
     }
     if (::connect(fd_, reinterpret_cast<sockaddr*>(&sock), sizeof(sock)) != 0) {
@@ -91,14 +80,14 @@ void Connection::read_exact(void* data, const size_t len) {
     }
 }
 
-void Connection::set_send_timeout(const __time_t sec, const __suseconds_t usec) {
+void Connection::set_send_timeout(const time_t sec, const suseconds_t usec) {
     const timeval timeout = {.tv_sec = sec, .tv_usec = usec};
     if (setsockopt(fd_, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout)) < 0) {
         throw TcpException{"Set send timeout error"};
     }
 }
 
-void Connection::set_recv_timeout(const __time_t sec, const __suseconds_t usec) {
+void Connection::set_recv_timeout(const time_t sec, const suseconds_t usec) {
     const timeval timeout = {.tv_sec = sec, .tv_usec = usec};
     if (setsockopt(fd_, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
         throw TcpException{"Set recv timeout error"};

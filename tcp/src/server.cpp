@@ -5,20 +5,9 @@
 
 namespace tcp {
 
-Server::Server(const char* addr, const uint16_t port, const int max_connection) {
+Server::Server(const std::string& addr, const uint16_t port, const int max_connection) {
     open(addr, port);
     set_max_connect(max_connection);
-}
-
-Server::Server(Server&& other) {
-    fd_ = std::move(other.fd_);
-    opened_ = other.opened_;
-}
-
-Server& Server::operator=(Server&& other) {
-    fd_ = std::move(other.fd_);
-    opened_ = other.opened_;
-    return *this;
 }
 
 Server::~Server() noexcept {
@@ -44,14 +33,14 @@ Connection Server::accept() {
     return Connection(std::move(fd), client);
 }
 
-void Server::open(const char* addr, const uint16_t port) {
+void Server::open(const std::string& addr, const uint16_t port) {
     if (is_opened()) {
         close();
     }
 
     sockaddr_in sock = {.sin_family = PF_INET,
                         .sin_port   = htons(port)};
-    if (inet_aton(addr, &sock.sin_addr) == 0) {
+    if (inet_aton(addr.data(), &sock.sin_addr) == 0) {
         throw TcpException{"Wrong address"};
     }
 

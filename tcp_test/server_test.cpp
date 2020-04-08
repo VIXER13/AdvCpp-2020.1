@@ -28,7 +28,7 @@ bool simpleDialog(tcp::Connection& connection) {
         std::cout << "Read len:";
         std::cin >> len;
         str.resize(len);
-        size_t len_read = connection.read(const_cast<char*>(str.data()), len);
+        size_t len_read = connection.read(str.data(), len);
         std::cout << "len_read:" << len_read << std::endl
                   << "String readed:" << str << std::endl;
     } else if (choice == 3) {
@@ -41,7 +41,7 @@ bool simpleDialog(tcp::Connection& connection) {
         std::cout << "Read len:";
         std::cin >> len;
         str.resize(len);
-        connection.read_exact(const_cast<char*>(str.data()), len);
+        connection.read_exact(str.data(), len);
         std::cout << "String readed:" <<  str << std::endl;
     } else if (choice == 5) {
         connection.close();

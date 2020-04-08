@@ -17,14 +17,12 @@ class Connection {
     Connection(process_lib::Descriptor&& fd, const sockaddr_in& sock_info);
 
  public:
-    Connection(const char* addr, const uint16_t port);
+    Connection(const std::string& addr, const uint16_t port);
     Connection(const Connection&) = delete;
-    Connection(Connection&& other) noexcept;
     Connection& operator=(const Connection&) = delete;
-    Connection& operator=(Connection&& other) noexcept;
     ~Connection() noexcept;
 
-    void connect(const char* addr, const uint16_t port);
+    void connect(const std::string& addr, const uint16_t port);
 
     void close() noexcept;
 
@@ -35,8 +33,8 @@ class Connection {
     size_t read(void* data, const size_t len);
     void read_exact(void* data, const size_t len);
 
-    void set_send_timeout(const __time_t sec, const __suseconds_t usec = 0);
-    void set_recv_timeout(const __time_t sec, const __suseconds_t usec = 0);
+    void set_send_timeout(const time_t sec, const suseconds_t usec = 0);
+    void set_recv_timeout(const time_t sec, const suseconds_t usec = 0);
 };
 
 class TcpException : public std::exception {

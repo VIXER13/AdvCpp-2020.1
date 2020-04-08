@@ -10,11 +10,9 @@ class Server {
     bool opened_ = false;
 
  public:
-    Server(const char* addr, const uint16_t port, const int max_connection = 1);
+    Server(const std::string& addr, const uint16_t port, const int max_connection = 1);
     Server(const Server&) = delete;
-    Server(Server&& other);
     Server& operator=(const Server&) = delete;
-    Server& operator=(Server&& other);
     ~Server() noexcept;
 
     void close() noexcept;
@@ -23,7 +21,7 @@ class Server {
 
     bool is_opened() const noexcept;
 
-    void open(const char* addr, const uint16_t port);
+    void open(const std::string& addr, const uint16_t port);
 
     void set_max_connect(const int max_connect);
 };
