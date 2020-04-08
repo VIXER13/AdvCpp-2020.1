@@ -18,7 +18,7 @@ Connection::Connection(const std::string& addr, const uint16_t port) {
 
 Connection::Connection(process_lib::Descriptor&& fd, const sockaddr_in& sock_info) :
     fd_(std::move(fd)) {
-    std::array<char, 15> addr = {};
+    std::array<char, INET_ADDRSTRLEN> addr = {};
     if (inet_ntop(PF_INET, &sock_info.sin_addr, addr.data(), static_cast<socklen_t>(addr.size())) == nullptr) {
         throw TcpException{"Error converting accepted address from binary to string: "};
     }
