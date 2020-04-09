@@ -33,4 +33,4 @@ void Descriptor::close() noexcept {
     }
 }
 
-}  // namespace process_lib
+}  // namespace file_descriptor

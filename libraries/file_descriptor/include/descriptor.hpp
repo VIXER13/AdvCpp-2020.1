@@ -10,8 +10,8 @@ class Descriptor {
     Descriptor(const Descriptor& other) = delete;
     Descriptor& operator=(const Descriptor& other) = delete;
 
-    explicit Descriptor() = default;
-    
+    Descriptor() = default;
+
     explicit Descriptor(const int fd) noexcept;
     Descriptor(Descriptor&& other) noexcept;
     Descriptor& operator=(Descriptor&& other) noexcept;
@@ -22,6 +22,6 @@ class Descriptor {
     void close() noexcept;
 };
 
-}  // namespace process_lib
+}  // namespace file_descriptor
 
 #endif  // DESCRIPTOR_HPP

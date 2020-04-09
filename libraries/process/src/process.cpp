@@ -14,17 +14,17 @@ Process::Process(const std::string& path) {
     if (pid_ == -1) {
         throw ProcessException{"Fork failed"};
     } else if (!pid_) {
-        if (dup2(fd_in .getDescriptor(file_descriptor::Pipe::Side::READ ),  STDIN_FILENO) == -1 || 
+        if (dup2(fd_in .getDescriptor(file_descriptor::Pipe::Side::READ ),  STDIN_FILENO) == -1 ||
             dup2(fd_out.getDescriptor(file_descriptor::Pipe::Side::WRITE), STDOUT_FILENO) == -1) {
             throw ProcessException{"Dup2 failed"};
         }
-        
+
         if (execl(path.c_str(), path.c_str(), nullptr) == -1) {
             throw ProcessException{"Execl failed"};
         }
     } else {
         write_in_ = std::move(fd_in .getDescriptor(file_descriptor::Pipe::Side::WRITE));
-        read_out_ = std::move(fd_out.getDescriptor(file_descriptor::Pipe::Side::READ ));
+        read_out_ = std::move(fd_out.getDescriptor(file_descriptor::Pipe::Side::READ));
         readable_ = true;
     }
 }
@@ -83,4 +83,4 @@ void Process::close() {
     readable_ = false;
 }
 
-}  // namespace process_lib
+}  // namespace process

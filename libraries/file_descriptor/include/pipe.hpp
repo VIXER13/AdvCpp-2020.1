@@ -18,10 +18,10 @@ class Pipe {
     Pipe(Pipe&& other) = default;
     Pipe& operator=(Pipe&& other) = default;
 
-    explicit Pipe();
+    Pipe();
     Descriptor& getDescriptor(const Side side) noexcept;
 };
 
-}
+}  // namespace file_descriptor
 
 #endif  // PIPE_HPP
