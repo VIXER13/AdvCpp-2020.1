@@ -1,7 +1,8 @@
 #include "descriptor.hpp"
 #include <unistd.h>
+#include <utility>
 
-namespace process_lib {
+namespace file_descriptor {
 
 Descriptor::Descriptor(const int fd) noexcept :
     fd_(fd) {}
@@ -26,7 +27,10 @@ Descriptor::operator int() const noexcept {
 }
 
 void Descriptor::close() noexcept {
-    ::close(fd_);
+    if (fd_ != -1) {
+        ::close(fd_);
+        fd_ = -1;
+    }
 }
 
 }  // namespace process_lib

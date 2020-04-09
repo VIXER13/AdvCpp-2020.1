@@ -11,7 +11,7 @@ void printMenu() {
               << "0 - exit" << std::endl;
 }
 
-bool simpleDialog(process_lib::Process& proc) {
+bool simpleDialog(process::Process& proc) {
     size_t choice = 0;
     std::cin >> choice;
     std::string str;
@@ -29,7 +29,7 @@ bool simpleDialog(process_lib::Process& proc) {
             std::cout << "Read len:";
             std::cin >> len;
             str.resize(len);
-            size_t len_read = proc.read(const_cast<char*>(str.data()), len);
+            size_t len_read = proc.read(str.data(), len);
             std::cout << "len_read:" << len_read << std::endl
                       << "String readed:" << str << std::endl;
         } else {
@@ -46,7 +46,7 @@ bool simpleDialog(process_lib::Process& proc) {
             std::cout << "Read len:";
             std::cin >> len;
             str.resize(len);
-            proc.readExact(const_cast<char*>(str.data()), len);
+            proc.readExact(str.data(), len);
             std::cout << "String readed:" <<  str << std::endl;
         } else {
             std::cerr << "Not readable" << std::endl;

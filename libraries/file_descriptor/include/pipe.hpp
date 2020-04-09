@@ -4,20 +4,21 @@
 #include "descriptor.hpp"
 #include <array>
 
-namespace process_lib {
+namespace file_descriptor {
 
 class Pipe {
     std::array<Descriptor, 2> fds_;
-    void move(Pipe&& other) noexcept;
 
  public:
     enum class Side : uint8_t {READ, WRITE};
 
-    explicit Pipe();
     Pipe(const Pipe&) = delete;
-    Pipe(Pipe&& other) noexcept;
     Pipe& operator=(const Pipe&) = delete;
-    Pipe& operator=(Pipe&& other) noexcept;
+
+    Pipe(Pipe&& other) = default;
+    Pipe& operator=(Pipe&& other) = default;
+
+    explicit Pipe();
     Descriptor& getDescriptor(const Side side) noexcept;
 };
 

@@ -2,43 +2,43 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
-#include <iostream>
 #include <array>
+#include "pipe.hpp"
+#include "process_exception.hpp"
 
-namespace process_lib {
+namespace process {
 
 Process::Process(const std::string& path) {
-    Pipe fd_in, fd_out;
-
-    pid = fork();
-    if (pid < 0) {
+    file_descriptor::Pipe fd_in, fd_out;
+    pid_ = fork();
+    if (pid_ == -1) {
         throw ProcessException{"Fork failed"};
-    } else if (!pid) {
-        if (dup2(fd_in .getDescriptor(Pipe::Side::READ ),  STDIN_FILENO) < 0 || 
-            dup2(fd_out.getDescriptor(Pipe::Side::WRITE), STDOUT_FILENO) < 0) {
+    } else if (!pid_) {
+        if (dup2(fd_in .getDescriptor(file_descriptor::Pipe::Side::READ ),  STDIN_FILENO) == -1 || 
+            dup2(fd_out.getDescriptor(file_descriptor::Pipe::Side::WRITE), STDOUT_FILENO) == -1) {
             throw ProcessException{"Dup2 failed"};
         }
-
-        if (execl(path.c_str(), path.c_str(), nullptr) < 0) {
+        
+        if (execl(path.c_str(), path.c_str(), nullptr) == -1) {
             throw ProcessException{"Execl failed"};
         }
     } else {
-        write_in = std::move(fd_in.getDescriptor(Pipe::Side::WRITE));
-        read_out = std::move(fd_out.getDescriptor(Pipe::Side::READ));
-        readable = true;
+        write_in_ = std::move(fd_in .getDescriptor(file_descriptor::Pipe::Side::WRITE));
+        read_out_ = std::move(fd_out.getDescriptor(file_descriptor::Pipe::Side::READ ));
+        readable_ = true;
     }
 }
 
 Process::~Process() {
     close();
-    if (pid) {
-        kill(pid, SIGTERM);
-        waitpid(pid, nullptr, 0);
+    if (pid_) {
+        kill(pid_, SIGTERM);
+        waitpid(pid_, nullptr, 0);
     }
 }
 
 size_t Process::write(const void* data, size_t len) {
-    ssize_t temp = ::write(write_in, data, len);
+    ssize_t temp = ::write(write_in_, data, len);
     if (temp == -1) {
         throw ProcessException{"Write error"};
     }
@@ -47,46 +47,40 @@ size_t Process::write(const void* data, size_t len) {
 
 void Process::writeExact(const void* data, size_t len) {
     size_t recorded = 0;
-    while (true) {
+    while (len - recorded) {
         recorded += write(static_cast<const int8_t*>(data) + recorded, len - recorded);
-        if (recorded == len) {
-            break;
-        }
     }
 }
 
 size_t Process::read(void* data, size_t len) {
-    ssize_t temp = ::read(read_out, data, len);
+    ssize_t temp = ::read(read_out_, data, len);
     if (temp == -1) {
         throw ProcessException{"Read error"};
     } else if (temp == 0 && len > 0) {
-        readable = false;
+        readable_ = false;
     }
     return temp;
 }
 
 void Process::readExact(void* data, size_t len) {
     size_t readed = 0;
-    while (true) {
+    while (len - readed) {
         readed += read(static_cast<int8_t*>(data) + readed, len - readed);
-        if (readed == len) {
-            break;
-        }
     }
 }
 
 bool Process::isReadable() const {
-    return readable;
+    return readable_;
 }
 
 void Process::closeStdin() {
-    write_in.close();
+    write_in_.close();
 }
 
 void Process::close() {
     closeStdin();
-    read_out.close();
-    readable = false;
+    read_out_.close();
+    readable_ = false;
 }
 
 }  // namespace process_lib

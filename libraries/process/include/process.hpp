@@ -1,16 +1,24 @@
 #ifndef PROCESS_HPP
 #define PROCESS_HPP
 
-#include "pipe.hpp"
+#include <sys/types.h>
+#include <string>
+#include "descriptor.hpp"
 
-namespace process_lib {
+namespace process {
 
 class Process {
-    Descriptor write_in, read_out;
-    pid_t pid = -1;
-    bool readable = false;
+    file_descriptor::Descriptor write_in_, read_out_;
+    pid_t pid_ = -1;
+    bool readable_ = false;
 
  public:
+    Process(const Process&) = delete;
+    Process& operator=(const Process& other) = delete;
+
+    Process(Process&&) = default;
+    Process& operator=(Process&& other) = default;
+
     explicit Process(const std::string& path);
     ~Process();
 
@@ -21,10 +29,9 @@ class Process {
 
     bool isReadable() const;
     void closeStdin();
-
     void close();
 };
 
-}  // namespace process_lib
+}  // namespace process
 
 #endif  // PROCESS_HPP
