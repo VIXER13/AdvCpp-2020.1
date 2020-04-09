@@ -20,6 +20,9 @@ BaseLogger& Logger::get_global_logger() noexcept {
 }
 
 void Logger::set_global_logger(std::unique_ptr<BaseLogger> other) {
+    if (other.get() == nullptr) {
+        throw LoggerException{"Logger can't be nullptr"};
+    }
     global_logger_ = std::move(other);
 }
 
