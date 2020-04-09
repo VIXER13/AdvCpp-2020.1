@@ -1,8 +1,8 @@
 #ifndef PIPE_HPP
 #define PIPE_HPP
 
-#include "descriptor.hpp"
 #include <array>
+#include "Descriptor.hpp"
 
 namespace file_descriptor {
 

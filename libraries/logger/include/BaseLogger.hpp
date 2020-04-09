@@ -3,7 +3,6 @@
 
 #include <map>
 #include <string>
-#include <exception>
 
 namespace logger {
 
@@ -17,14 +16,14 @@ class BaseLogger {
     void info(const std::string& str);
     void warn(const std::string& str);
     void error(const std::string& str);
-    void set_level(const Level lvl) noexcept;
+    void setLevel(const Level lvl) noexcept;
     Level level() const noexcept;
 
     virtual void flush() = 0;
     virtual ~BaseLogger() noexcept = default;
 
  protected:
-    const std::string& get_prefix(const Level lvl) const noexcept;
+    const std::string& getPrefix(const Level lvl) const noexcept;
 
  private:
     Level level_ = Level::INFO;
@@ -34,18 +33,6 @@ class BaseLogger {
                                                                        {Level::ERROR,   "ERROR: "  }};
 
     virtual void log(const std::string& str, const Level lvl) = 0;
-};
-
-class LoggerException : public std::exception {
-    std::string message_;
-
- public:
-    explicit LoggerException(const std::string& str) :
-        message_(str) {}
-
-    const char* what() const noexcept override {
-        return message_.c_str();
-    }
 };
 
 }  // namespace logger

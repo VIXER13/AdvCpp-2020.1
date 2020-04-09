@@ -12,7 +12,7 @@ void StdoutLogger::flush() {
 
 void StdoutLogger::log(const std::string& str, const Level lvl) {
     if (lvl >= level()) {
-        std::cout << get_prefix(lvl) << str << '\n';
+        std::cout << getPrefix(lvl) << str << '\n';
     }
 }
 

@@ -21,7 +21,7 @@ void BaseLogger::error(const std::string& str) {
     log(str, Level::ERROR);
 }
 
-void BaseLogger::set_level(const Level lvl) noexcept {
+void BaseLogger::setLevel(const Level lvl) noexcept {
     level_ = lvl;
 }
 
@@ -29,7 +29,7 @@ Level BaseLogger::level() const noexcept {
     return level_;
 }
 
-const std::string& BaseLogger::get_prefix(const Level lvl) const noexcept {
+const std::string& BaseLogger::getPrefix(const Level lvl) const noexcept {
     return message_level_.at(lvl);
 }
 

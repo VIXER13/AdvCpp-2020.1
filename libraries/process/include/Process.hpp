@@ -3,7 +3,7 @@
 
 #include <sys/types.h>
 #include <string>
-#include "descriptor.hpp"
+#include "Descriptor.hpp"
 
 namespace process {
 

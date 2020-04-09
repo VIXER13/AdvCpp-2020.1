@@ -1,10 +1,10 @@
-#include "process.hpp"
+#include "Process.hpp"
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <array>
-#include "pipe.hpp"
-#include "process_exception.hpp"
+#include "Pipe.hpp"
+#include "ProcessException.hpp"
 
 namespace process {
 

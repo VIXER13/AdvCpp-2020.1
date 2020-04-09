@@ -1,7 +1,7 @@
 #ifndef SIMPLE_DIALOG_HPP
 #define SIMPLE_DIALOG_HPP
 
-#include "process.hpp"
+#include "Process.hpp"
 
 void printMenu();
 bool simpleDialog(process::Process& proc);

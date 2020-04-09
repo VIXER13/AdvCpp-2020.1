@@ -1,7 +1,7 @@
-#include "pipe.hpp"
+#include "Pipe.hpp"
 #include <unistd.h>
 #include <utility>
-#include "file_descriptor_exception.hpp"
+#include "FileDescriptorException.hpp"
 
 namespace file_descriptor {
 

@@ -1,11 +1,11 @@
-#include "logger_init.hpp"
+#include "LoggerInit.hpp"
 #include <unistd.h>
 #include <getopt.h>
 #include <string.h>
 #include <iostream>
 #include "Logger.hpp"
 
-void logger_init(int argc, char *const *argv) {
+void loggerInit(int argc, char *const *argv) {
     static const std::array<std::string, 4> levels = {"debug", "info", "warning", "error"};
     static constexpr struct option long_options[] = {
             {.name = "verbose"      , .has_arg = no_argument       , .flag = nullptr, .val = 'v'},
@@ -46,10 +46,10 @@ void logger_init(int argc, char *const *argv) {
     }
 
     if (!path.empty()) {
-        logger::Logger::get_instance().set_global_logger(logger::create_file_logger(path, lvl));
+        logger::Logger::getInstance().setGlobalLogger(logger::createFileLogger(path, lvl));
     } else if (stderr_quest) {
-        logger::Logger::get_instance().set_global_logger(logger::create_stderr_logger(lvl));
+        logger::Logger::getInstance().setGlobalLogger(logger::createStderrLogger(lvl));
     } else {
-        logger::Logger::get_instance().set_global_logger(logger::create_stdout_logger(lvl));
+        logger::Logger::getInstance().setGlobalLogger(logger::createStdoutLogger(lvl));
     }
 }

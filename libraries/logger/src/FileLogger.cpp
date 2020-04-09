@@ -11,7 +11,7 @@ void FileLogger::flush() {
 
 void FileLogger::log(const std::string& str, const Level lvl) {
     if (lvl >= level()) {
-        fout_ << get_prefix(lvl) << str << '\n';
+        fout_ << getPrefix(lvl) << str << '\n';
     }
 }
 

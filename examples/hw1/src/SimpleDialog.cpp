@@ -1,4 +1,4 @@
-#include "simple_dialog.hpp"
+#include "SimpleDialog.hpp"
 #include <string.h>
 #include <iostream>
 

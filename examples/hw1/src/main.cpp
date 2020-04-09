@@ -1,9 +1,9 @@
 #include <unistd.h>
 #include <signal.h>
 #include <iostream>
-#include "simple_dialog.hpp"
-#include "process_exception.hpp"
-#include "file_descriptor_exception.hpp"
+#include "SimpleDialog.hpp"
+#include "ProcessException.hpp"
+#include "FileDescriptorException.hpp"
 
 int main(int argc, char **argv) {
     if (argc > 1) {

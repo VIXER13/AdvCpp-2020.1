@@ -1,9 +1,9 @@
 #include <iostream>
-#include "logger_init.hpp"
+#include "LoggerInit.hpp"
 #include "Logger.hpp"
 
 int main(int argc, char **argv) {
-    logger_init(argc, argv);
+    loggerInit(argc, argv);
     logger::debug("test");
     logger::info("test");
     logger::warning("test");
