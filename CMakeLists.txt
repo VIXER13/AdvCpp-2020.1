@@ -13,8 +13,10 @@ add_compile_options(-Wall -Wextra)
 add_subdirectory(libraries/file_descriptor)
 add_subdirectory(libraries/process)
 add_subdirectory(libraries/logger)
+add_subdirectory(libraries/epoll_server)
 
 #EXAMPLES
 
 add_subdirectory(examples/hw1)
 add_subdirectory(examples/hw2)
+add_subdirectory(examples/hw4)
