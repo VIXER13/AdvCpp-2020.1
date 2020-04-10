@@ -33,4 +33,8 @@ void Descriptor::close() noexcept {
     }
 }
 
+int Descriptor::extract() noexcept {
+    return std::exchange(fd_, -1);
+}
+
 }  // namespace file_descriptor

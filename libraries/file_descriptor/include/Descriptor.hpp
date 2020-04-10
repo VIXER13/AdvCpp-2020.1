@@ -20,6 +20,7 @@ class Descriptor {
     operator int() const noexcept;
 
     void close() noexcept;
+    int extract() noexcept;
 };
 
 }  // namespace file_descriptor
