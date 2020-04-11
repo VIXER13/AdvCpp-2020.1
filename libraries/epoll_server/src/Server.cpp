@@ -4,6 +4,7 @@
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include "EpollServerException.hpp"
+#include "Logger.hpp"
 
 namespace epoll_server {
 
@@ -13,7 +14,6 @@ Server::Server(const std::string& addr, const uint16_t port, const int max_conne
     open(addr, port);
     setMaxConnect(max_connection);
     createEpoll();
-    //epollEvents(serv_fd_, EPOLLIN | EPOLLET, EpollCtlOptions::ADD);
 }
 
 Server::~Server() noexcept {
@@ -35,6 +35,7 @@ void Server::open(const std::string& addr, const uint16_t port) {
     if (serv_fd_ == -1) {
         throw EpollServerException{"Socket error"};
     }
+    logger::debug("serv_fd_ = " + std::to_string(serv_fd_));
 
     if (bind(serv_fd_, reinterpret_cast<sockaddr*>(&sock), sizeof(sock)) != 0) {
         close();
@@ -59,32 +60,35 @@ void Server::createEpoll() {
     if (epoll_fd_ == -1) {
         throw EpollServerException{"Epoll create failed"};
     }
-    epollEvents(serv_fd_, EPOLLIN, EpollCtlOptions::ADD);
+    epollEvents(serv_fd_, EPOLLIN | EPOLLRDHUP, EpollCtlOptions::ADD);
 }
 
 void Server::epollEvents(const file_descriptor::Descriptor& fd, const uint32_t events, const EpollCtlOptions option) {
     epoll_event event = {.events  = events,
                          .data = {.fd = fd}};
-    if (epoll_ctl(epoll_fd_, static_cast<int>(option), fd, &event) == -1) {
+    if (epoll_ctl(epoll_fd_, int(option), fd, &event) == -1) {
         throw EpollServerException{"epoll_ctl add failed"};
     }
 }
 
 void Server::eventLoop(const size_t epoll_size) {
-    std::vector<epoll_event> events(epoll_size);
+    std::vector<epoll_event> events(epoll_size, epoll_event{});
     while (true) {
-        const size_t ndfs = epoll_wait(epoll_fd_, events.data(), static_cast<int>(events.size()), -1);
-        if (ndfs == size_t(-1)) {
+        int ndfs = epoll_wait(epoll_fd_, events.data(), int(events.size()), -1);
+        if (ndfs == -1) {
             if (errno == EINTR) {
                 continue;
             }
             throw EpollServerException{"epoll_wait error"};
         }
+        logger::debug("ndfs = " + std::to_string(ndfs));
 
-        for(size_t i = 0; i < ndfs; ++i) {
+        for(size_t i = 0; i < size_t(ndfs); ++i) {
             if (events[i].data.fd == serv_fd_) {
+                logger::debug("acceptClient");
                 acceptClients();
             } else {
+                logger::debug("handleClient. fd = " + std::to_string(events[i].data.fd));
                 handleClient(events[i].data.fd, events[i]);
             }
         }
@@ -114,16 +118,29 @@ void Server::acceptClients() {
             }
             throw EpollServerException{"accept4 error"};
         }
-        epollEvents(fd, EPOLLIN, EpollCtlOptions::ADD);
-        connections_.emplace(fd, Connection{std::move(fd), cliaddr});
+        logger::debug("Accepted fd = " + std::to_string(fd));
+        epollEvents(fd, EPOLLIN | EPOLLRDHUP, EpollCtlOptions::ADD);
+        const int temp = fd; // std::move может выполниться раньше и будет плохо
+        connections_.emplace(temp, Connection{std::move(fd), cliaddr});
     }
 }
 
 void Server::handleClient(const int fd, const epoll_event& event) {
-    Connection& connection = connections_.at(fd);
-    connection.newEvent(event);
-    callback_(connection);
+    if (event.events & EPOLLIN) {
+        logger::debug("EPOLLIN");
+    }
+    if (event.events & EPOLLOUT) {
+        logger::debug("EPOLLOUT");
+    }
     if (event.events & EPOLLHUP || event.events & EPOLLERR) {
+        logger::debug("event.events & EPOLLHUP || event.events & EPOLLERR");
+    }
+
+    Connection& connection = connections_.at(fd);
+    connection.setEvent(event);
+    callback_(connection);
+
+    if (event.events & EPOLLHUP || event.events & EPOLLERR || event.events & EPOLLRDHUP) {
         connections_.erase(fd);
         return;
     }

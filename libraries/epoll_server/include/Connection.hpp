@@ -13,7 +13,8 @@ namespace epoll_server {
 class Connection {
     friend class Server;
 
-    std::vector<epoll_event> events_;
+    std::string buffer_;
+    epoll_event event_ = {};
     std::array<char, INET_ADDRSTRLEN> addr_ = {};
     file_descriptor::Descriptor fd_;
     uint16_t port_ = 0;
@@ -41,8 +42,14 @@ class Connection {
     void setSendTimeout(const time_t sec, const suseconds_t usec = 0);
     void setRecvTimeout(const time_t sec, const suseconds_t usec = 0);
 
-    void newEvent(const epoll_event& event);
-    const std::vector<epoll_event>& eventsView() const;
+    void setEvent(const epoll_event& event);
+    const epoll_event& getEvent() const;
+
+    void appendToBuffer(const std::string& str);
+    const std::string& getBuffer() const;
+
+    const std::array<char, INET_ADDRSTRLEN>& getAddr() const;
+    uint16_t getPort() const;
 
     bool isOpened() const noexcept;
     void close() noexcept;

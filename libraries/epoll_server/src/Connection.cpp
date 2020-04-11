@@ -74,12 +74,28 @@ void Connection::readExact(void* data, const size_t len) {
     }
 }
 
-void Connection::newEvent(const epoll_event& event) {
-    events_.push_back(event);
+void Connection::setEvent(const epoll_event& event) {
+    event_ = event;
 }
 
-const std::vector<epoll_event>& Connection::eventsView() const {
-    return events_;
+const epoll_event& Connection::getEvent() const {
+    return event_;
+}
+
+void Connection::appendToBuffer(const std::string& str) {
+    buffer_ += str;
+}
+
+const std::string& Connection::getBuffer() const {
+    return buffer_;
+}
+
+const std::array<char, INET_ADDRSTRLEN>& Connection::getAddr() const {
+    return addr_;
+}
+
+uint16_t Connection::getPort() const {
+    return port_;
 }
 
 void Connection::setSendTimeout(const time_t sec, const suseconds_t usec) {
