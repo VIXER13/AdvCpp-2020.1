@@ -13,10 +13,11 @@ namespace epoll_server {
 class Connection {
     friend class Server;
 
-    std::string buffer_;
-    epoll_event event_ = {};
+    std::string read_buffer_, write_buffer_;
     std::array<char, INET_ADDRSTRLEN> addr_ = {};
     file_descriptor::Descriptor fd_;
+    size_t writed_ = 0;
+    uint32_t events_ = 0;
     uint16_t port_ = 0;
     bool opened_ = false;
 
@@ -35,21 +36,25 @@ class Connection {
     void connect(const std::string& addr, const uint16_t port);
 
     size_t write(const void* data, const size_t len);
-    void writeExact(const void* data, const size_t len);
     size_t read(void* data, const size_t len);
-    void readExact(void* data, const size_t len);
 
     void setSendTimeout(const time_t sec, const suseconds_t usec = 0);
     void setRecvTimeout(const time_t sec, const suseconds_t usec = 0);
 
-    void setEvent(const epoll_event& event);
-    const epoll_event& getEvent() const;
+    void setEvents(const uint32_t events) noexcept;
+    const uint32_t& getEvents() const noexcept;
 
-    void appendToBuffer(const std::string& str);
-    const std::string& getBuffer() const;
+    void appendToReadBuffer(const std::string& str);
+    void clearReadBuffer() noexcept;
+    const std::string& getReadBuffer() const noexcept;
 
-    const std::array<char, INET_ADDRSTRLEN>& getAddr() const;
-    uint16_t getPort() const;
+    void setWriteBuffer(const std::string& str);
+    const std::string& getWriteBuffer() const noexcept;
+    void setWrited(const size_t writed) noexcept;
+    size_t getWrited() const noexcept;
+
+    const std::array<char, INET_ADDRSTRLEN>& getAddr() const noexcept;
+    uint16_t getPort() const noexcept;
 
     bool isOpened() const noexcept;
     void close() noexcept;

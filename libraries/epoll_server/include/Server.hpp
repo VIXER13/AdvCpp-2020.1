@@ -20,7 +20,7 @@ class Server {
     void createEpoll();
     void epollEvents(const file_descriptor::Descriptor& fd, const uint32_t events, const EpollCtlOptions option);
     void acceptClients();
-    void handleClient(const int fd, const epoll_event& event);
+    void handleClient(const int fd, const uint32_t events);
 
  public:
     Server(const Server&) = delete;

@@ -50,13 +50,6 @@ size_t Connection::write(const void* data, const size_t len) {
     return temp;
 }
 
-void Connection::writeExact(const void* data, const size_t len) {
-    size_t recorded = 0;
-    while (len - recorded) {
-        recorded += write(static_cast<const int8_t*>(data) + recorded, len - recorded);
-    }
-}
-
 size_t Connection::read(void* data, const size_t len) {
     ssize_t temp = ::read(fd_, data, len);
     if (temp == -1) {
@@ -67,34 +60,47 @@ size_t Connection::read(void* data, const size_t len) {
     return temp;
 }
 
-void Connection::readExact(void* data, const size_t len) {
-    size_t readed = 0;
-    while (len - readed) {
-        readed += read(static_cast<int8_t*>(data) + readed, len - readed);
-    }
+void Connection::setEvents(const uint32_t events) noexcept {
+    events_ = events;
 }
 
-void Connection::setEvent(const epoll_event& event) {
-    event_ = event;
+const uint32_t& Connection::getEvents() const noexcept {
+    return events_;
 }
 
-const epoll_event& Connection::getEvent() const {
-    return event_;
+void Connection::appendToReadBuffer(const std::string& str) {
+    read_buffer_ += str;
 }
 
-void Connection::appendToBuffer(const std::string& str) {
-    buffer_ += str;
+void Connection::clearReadBuffer() noexcept {
+    read_buffer_.clear();
 }
 
-const std::string& Connection::getBuffer() const {
-    return buffer_;
+const std::string& Connection::getReadBuffer() const  noexcept{
+    return read_buffer_;
 }
 
-const std::array<char, INET_ADDRSTRLEN>& Connection::getAddr() const {
+void Connection::setWriteBuffer(const std::string& str) {
+    write_buffer_ = str;
+}
+
+const std::string& Connection::getWriteBuffer() const  noexcept{
+    return write_buffer_;
+}
+
+void Connection::setWrited(const size_t writed) noexcept {
+    writed_ = writed;
+}
+
+size_t Connection::getWrited() const  noexcept{
+    return writed_;
+}
+
+const std::array<char, INET_ADDRSTRLEN>& Connection::getAddr() const  noexcept{
     return addr_;
 }
 
-uint16_t Connection::getPort() const {
+uint16_t Connection::getPort() const  noexcept{
     return port_;
 }
 

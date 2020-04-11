@@ -89,7 +89,7 @@ void Server::eventLoop(const size_t epoll_size) {
                 acceptClients();
             } else {
                 logger::debug("handleClient. fd = " + std::to_string(events[i].data.fd));
-                handleClient(events[i].data.fd, events[i]);
+                handleClient(events[i].data.fd, events[i].events);
             }
         }
     }
@@ -119,28 +119,28 @@ void Server::acceptClients() {
             throw EpollServerException{"accept4 error"};
         }
         logger::debug("Accepted fd = " + std::to_string(fd));
-        epollEvents(fd, EPOLLIN | EPOLLRDHUP, EpollCtlOptions::ADD);
+        epollEvents(fd, EPOLLIN | EPOLLOUT | EPOLLRDHUP, EpollCtlOptions::ADD);
         const int temp = fd; // std::move может выполниться раньше и будет плохо
         connections_.emplace(temp, Connection{std::move(fd), cliaddr});
     }
 }
 
-void Server::handleClient(const int fd, const epoll_event& event) {
-    if (event.events & EPOLLIN) {
+void Server::handleClient(const int fd, const uint32_t events) {
+    if (events & EPOLLIN) {
         logger::debug("EPOLLIN");
     }
-    if (event.events & EPOLLOUT) {
+    if (events & EPOLLOUT) {
         logger::debug("EPOLLOUT");
     }
-    if (event.events & EPOLLHUP || event.events & EPOLLERR) {
-        logger::debug("event.events & EPOLLHUP || event.events & EPOLLERR");
+    if (events & EPOLLHUP || events & EPOLLERR || events & EPOLLRDHUP) {
+        logger::debug("event.events & EPOLLHUP || event.events & EPOLLERR || events & EPOLLRDHUP");
     }
 
     Connection& connection = connections_.at(fd);
-    connection.setEvent(event);
+    connection.setEvents(events);
     callback_(connection);
 
-    if (event.events & EPOLLHUP || event.events & EPOLLERR || event.events & EPOLLRDHUP) {
+    if (events & EPOLLHUP || events & EPOLLERR || events & EPOLLRDHUP) {
         connections_.erase(fd);
         return;
     }
