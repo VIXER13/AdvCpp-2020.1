@@ -16,10 +16,9 @@ class Connection {
     std::string read_buffer_, write_buffer_;
     std::array<char, INET_ADDRSTRLEN> addr_ = {};
     file_descriptor::Descriptor fd_;
-    size_t writed_ = 0;
+    size_t written_ = 0;
     uint32_t events_ = 0;
     uint16_t port_ = 0;
-    bool opened_ = false;
 
     Connection(file_descriptor::Descriptor&& fd, const sockaddr_in& sock_info);
 
@@ -42,7 +41,7 @@ class Connection {
     void setRecvTimeout(const time_t sec, const suseconds_t usec = 0);
 
     void setEvents(const uint32_t events) noexcept;
-    const uint32_t& getEvents() const noexcept;
+    uint32_t getEvents() const noexcept;
 
     void appendToReadBuffer(const std::string& str);
     void clearReadBuffer() noexcept;
@@ -50,13 +49,12 @@ class Connection {
 
     void setWriteBuffer(const std::string& str);
     const std::string& getWriteBuffer() const noexcept;
-    void setWrited(const size_t writed) noexcept;
-    size_t getWrited() const noexcept;
+    void setWritten(const size_t writed) noexcept;
+    size_t getWritten() const noexcept;
 
     const std::array<char, INET_ADDRSTRLEN>& getAddr() const noexcept;
     uint16_t getPort() const noexcept;
 
-    bool isOpened() const noexcept;
     void close() noexcept;
 };
 

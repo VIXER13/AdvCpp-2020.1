@@ -13,6 +13,8 @@ int main(int argc, char** argv) {
 
     if (argc > 4) {
         logger::Logger::getInstance().setGlobalLogger(logger::createStderrLogger(logger::Level::DEBUG));
+    } else {
+        logger::Logger::getInstance().setGlobalLogger(logger::createStderrLogger(logger::Level::INFO));
     }
 
     try {
@@ -21,7 +23,9 @@ int main(int argc, char** argv) {
                 if (connection.getEvents() & EPOLLHUP ||
                     connection.getEvents() & EPOLLERR ||
                     connection.getEvents() & EPOLLRDHUP) {
-                    std::cout << "Disconnected" << std::endl;
+                    logger::info(std::string("Disconnected: ")+
+                                 connection.getAddr().data() + " " +
+                                 std::to_string(connection.getPort()));
                     return;
                 }
 
@@ -41,12 +45,12 @@ int main(int argc, char** argv) {
                 }
                 
                 if (connection.getReadBuffer().size() == READ_SIZE && connection.getEvents() & EPOLLOUT) {
-                    size_t writed = connection.write(connection.getWriteBuffer().c_str() + connection.getWrited(),
-                                                     connection.getWriteBuffer().size()  - connection.getWrited());
-                    connection.setWrited(connection.getWrited() + writed);
-                    if (connection.getWrited() == connection.getWriteBuffer().size()) {
+                    size_t written = connection.write(connection.getWriteBuffer().c_str() + connection.getWritten(),
+                                                      connection.getWriteBuffer().size()  - connection.getWritten());
+                    connection.setWritten(connection.getWritten() + written);
+                    if (connection.getWritten() == connection.getWriteBuffer().size()) {
                         // Очищаем для повтора
-                        connection.setWrited(0);
+                        connection.setWritten(0);
                         connection.setWriteBuffer("");
                         connection.clearReadBuffer();
                     }
@@ -58,7 +62,6 @@ int main(int argc, char** argv) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
-
 
     return EXIT_SUCCESS;
 }

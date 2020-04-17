@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include "string.h"
+#include <string.h>
 #include <array>
 #include "EpollServerException.hpp"
 
@@ -13,7 +13,6 @@ Connection::Connection(const std::string& addr, const uint16_t port) {
     if (fd_ < 0) {
         throw EpollServerException{"Error socket"};
     }
-    opened_ = true;
     connect(addr, port);
 }
 
@@ -54,8 +53,6 @@ size_t Connection::read(void* data, const size_t len) {
     ssize_t temp = ::read(fd_, data, len);
     if (temp == -1) {
         throw EpollServerException{"Read error"};
-    } else if (temp == 0 && len > 0) {
-        opened_ = false;
     }
     return temp;
 }
@@ -64,7 +61,7 @@ void Connection::setEvents(const uint32_t events) noexcept {
     events_ = events;
 }
 
-const uint32_t& Connection::getEvents() const noexcept {
+uint32_t Connection::getEvents() const noexcept {
     return events_;
 }
 
@@ -88,12 +85,12 @@ const std::string& Connection::getWriteBuffer() const  noexcept{
     return write_buffer_;
 }
 
-void Connection::setWrited(const size_t writed) noexcept {
-    writed_ = writed;
+void Connection::setWritten(const size_t writed) noexcept {
+    written_ = writed;
 }
 
-size_t Connection::getWrited() const  noexcept{
-    return writed_;
+size_t Connection::getWritten() const  noexcept{
+    return written_;
 }
 
 const std::array<char, INET_ADDRSTRLEN>& Connection::getAddr() const  noexcept{
@@ -120,11 +117,6 @@ void Connection::setRecvTimeout(const time_t sec, const suseconds_t usec) {
 
 void Connection::close() noexcept {
     fd_.close();
-    opened_ = false;
-}
-
-bool Connection::isOpened() const noexcept {
-    return opened_;
 }
 
 }  // namespace epoll_server

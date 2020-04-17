@@ -21,10 +21,6 @@ Server::~Server() noexcept {
 }
 
 void Server::open(const std::string& addr, const uint16_t port) {
-    if (isOpened()) {
-        close();
-    }
-
     sockaddr_in sock = {.sin_family = PF_INET,
                         .sin_port   = htons(port)};
     if (inet_aton(addr.data(), &sock.sin_addr) == 0) {
@@ -41,8 +37,6 @@ void Server::open(const std::string& addr, const uint16_t port) {
         close();
         throw EpollServerException{"Bind error"};
     }
-
-    opened_ = true;
 }
 
 void Server::setMaxConnect(const int max_connect) {
@@ -98,11 +92,6 @@ void Server::eventLoop(const size_t epoll_size) {
 void Server::close() noexcept {
     serv_fd_.close();
     epoll_fd_.close();
-    opened_ = false;
-}
-
-bool Server::isOpened() const noexcept {
-    return opened_;
 }
 
 void Server::acceptClients() {
@@ -122,6 +111,9 @@ void Server::acceptClients() {
         epollEvents(fd, EPOLLIN | EPOLLOUT | EPOLLRDHUP, EpollCtlOptions::ADD);
         const int temp = fd; // std::move может выполниться раньше и будет плохо
         connections_.emplace(temp, Connection{std::move(fd), cliaddr});
+        logger::info(std::string("Connected: ") +
+                     connections_.at(temp).getAddr().data() + " " +
+                     std::to_string(connections_.at(temp).getPort()));
     }
 }
 

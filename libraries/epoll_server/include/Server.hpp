@@ -15,8 +15,8 @@ class Server {
     std::unordered_map<int, Connection> connections_;
     std::function<void(Connection&)> callback_;
     file_descriptor::Descriptor serv_fd_, epoll_fd_;
-    bool opened_ = false;
 
+    void open(const std::string& addr, const uint16_t port);
     void createEpoll();
     void epollEvents(const file_descriptor::Descriptor& fd, const uint32_t events, const EpollCtlOptions option);
     void acceptClients();
@@ -33,13 +33,11 @@ class Server {
            const std::function<void(Connection&)>& callback);
     ~Server() noexcept;
 
-    void open(const std::string& addr, const uint16_t port);
     void setMaxConnect(const int max_connect);
     void setNewCallback(const std::function<void(Connection&)>& callback);
 
     void eventLoop(const size_t epoll_size);
 
-    bool isOpened() const noexcept;
     void close() noexcept;
 };
 
