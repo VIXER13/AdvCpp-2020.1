@@ -3,6 +3,15 @@
 #include "EpollServerException.hpp"
 #include "Logger.hpp"
 
+using namespace std::literals;
+namespace tcp {
+
+static constexpr size_t ADDRESS       = 1,
+                        PORT          = 2,
+                        MAX_CONNECTED = 3;
+
+}  // namespace tcp
+
 static constexpr size_t READ_SIZE = 16; // Читаем по 16 байт, после чего посылаем ответ
 
 int main(int argc, char** argv) {
@@ -11,29 +20,24 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
-    if (argc > 4) {
-        logger::Logger::getInstance().setGlobalLogger(logger::createStderrLogger(logger::Level::DEBUG));
-    } else {
-        logger::Logger::getInstance().setGlobalLogger(logger::createStderrLogger(logger::Level::INFO));
-    }
+    logger::Logger::getInstance().setGlobalLogger(logger::createStderrLogger(argc > 4 ? logger::Level::DEBUG :
+                                                                                        logger::Level::INFO));
 
     try {
-        epoll_server::Server server(argv[1], uint16_t(std::stoul(argv[2])), atoi(argv[3]),
+        epoll_server::Server server(argv[tcp::ADDRESS], uint16_t(std::stoul(argv[tcp::PORT])), std::atoi(argv[tcp::MAX_CONNECTED]),
             [](epoll_server::Connection& connection) {
-                if (connection.getEvents() & EPOLLHUP ||
-                    connection.getEvents() & EPOLLERR ||
-                    connection.getEvents() & EPOLLRDHUP) {
-                    logger::info(std::string("Disconnected: ")+
-                                 connection.getAddr().data() + " " +
-                                 std::to_string(connection.getPort()));
-                    return;
-                }
-
                 if (connection.getEvents() & EPOLLIN) {
                     std::string message(READ_SIZE - connection.getReadBuffer().size(), '\0');
                     size_t readed = connection.read(message.data(), message.size());
                     message.resize(readed);
                     connection.appendToReadBuffer(message);
+
+                    // Более остроумного сценария выхода я не придумал
+                    if (connection.getReadBuffer().find("close") != std::string::npos) {
+                        connection.setEvents(epoll_server::Connection::DISCONECT);
+                        return;
+                    }
+
                     if (connection.getReadBuffer().size() == READ_SIZE) {
                         std::cout << "Readed: " << connection.getReadBuffer() << std::endl
                                   << "From: "   << connection.getAddr().data() << " "

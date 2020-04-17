@@ -6,6 +6,8 @@
 #include "EpollServerException.hpp"
 #include "Logger.hpp"
 
+using namespace std::literals;
+
 namespace epoll_server {
 
 Server::Server(const std::string& addr, const uint16_t port, const int max_connection,
@@ -111,28 +113,24 @@ void Server::acceptClients() {
         epollEvents(fd, EPOLLIN | EPOLLOUT | EPOLLRDHUP, EpollCtlOptions::ADD);
         const int temp = fd; // std::move может выполниться раньше и будет плохо
         connections_.emplace(temp, Connection{std::move(fd), cliaddr});
-        logger::info(std::string("Connected: ") +
+        logger::info("Connected: "s +
                      connections_.at(temp).getAddr().data() + " " +
                      std::to_string(connections_.at(temp).getPort()));
     }
 }
 
 void Server::handleClient(const int fd, const uint32_t events) {
-    if (events & EPOLLIN) {
-        logger::debug("EPOLLIN");
-    }
-    if (events & EPOLLOUT) {
-        logger::debug("EPOLLOUT");
-    }
-    if (events & EPOLLHUP || events & EPOLLERR || events & EPOLLRDHUP) {
-        logger::debug("event.events & EPOLLHUP || event.events & EPOLLERR || events & EPOLLRDHUP");
-    }
-
     Connection& connection = connections_.at(fd);
     connection.setEvents(events);
-    callback_(connection);
 
-    if (events & EPOLLHUP || events & EPOLLERR || events & EPOLLRDHUP) {
+    if (!(connection.getEvents() & Connection::DISCONECT)) {
+        callback_(connection);
+    }
+
+    if (connection.getEvents() & Connection::DISCONECT) {
+        logger::info("Disconnected: "s + 
+                     connection.getAddr().data() + " " +
+                     std::to_string(connection.getPort()));
         connections_.erase(fd);
         return;
     }

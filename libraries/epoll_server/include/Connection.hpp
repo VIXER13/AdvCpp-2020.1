@@ -23,6 +23,8 @@ class Connection {
     Connection(file_descriptor::Descriptor&& fd, const sockaddr_in& sock_info);
 
  public:
+    static constexpr uint32_t DISCONECT = EPOLLHUP | EPOLLERR | EPOLLRDHUP;
+
     Connection(const Connection&) = delete;
     Connection& operator=(const Connection&) = delete;
 
