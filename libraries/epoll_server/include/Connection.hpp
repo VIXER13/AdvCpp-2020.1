@@ -37,6 +37,7 @@ class Connection {
     void connect(const std::string& addr, const uint16_t port);
 
     size_t write(const void* data, const size_t len);
+    bool writeBufferExact();
     size_t read(void* data, const size_t len);
 
     void setSendTimeout(const time_t sec, const suseconds_t usec = 0);
@@ -45,18 +46,13 @@ class Connection {
     void setEvents(const uint32_t events) noexcept;
     uint32_t getEvents() const noexcept;
 
-    void appendToReadBuffer(const std::string& str);
-    void clearReadBuffer() noexcept;
-    const std::string& getReadBuffer() const noexcept;
-
-    void setWriteBuffer(const std::string& str);
-    const std::string& getWriteBuffer() const noexcept;
-    void setWritten(const size_t writed) noexcept;
-    size_t getWritten() const noexcept;
+    std::string& getReadBuffer() noexcept;
+    std::string& getWriteBuffer() noexcept;
 
     const std::array<char, INET_ADDRSTRLEN>& getAddr() const noexcept;
     uint16_t getPort() const noexcept;
 
+    void clearBuffers() noexcept;
     void close() noexcept;
 };
 

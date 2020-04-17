@@ -49,6 +49,11 @@ size_t Connection::write(const void* data, const size_t len) {
     return temp;
 }
 
+bool Connection::writeBufferExact() {
+    written_ += write(std::next(write_buffer_.c_str(), written_),write_buffer_.size() - written_);
+    return write_buffer_.size() == written_;
+}
+
 size_t Connection::read(void* data, const size_t len) {
     ssize_t temp = ::read(fd_, data, len);
     if (temp == -1) {
@@ -65,32 +70,12 @@ uint32_t Connection::getEvents() const noexcept {
     return events_;
 }
 
-void Connection::appendToReadBuffer(const std::string& str) {
-    read_buffer_ += str;
-}
-
-void Connection::clearReadBuffer() noexcept {
-    read_buffer_.clear();
-}
-
-const std::string& Connection::getReadBuffer() const  noexcept{
+std::string& Connection::getReadBuffer() noexcept {
     return read_buffer_;
 }
 
-void Connection::setWriteBuffer(const std::string& str) {
-    write_buffer_ = str;
-}
-
-const std::string& Connection::getWriteBuffer() const  noexcept{
+std::string& Connection::getWriteBuffer() noexcept {
     return write_buffer_;
-}
-
-void Connection::setWritten(const size_t writed) noexcept {
-    written_ = writed;
-}
-
-size_t Connection::getWritten() const  noexcept{
-    return written_;
 }
 
 const std::array<char, INET_ADDRSTRLEN>& Connection::getAddr() const  noexcept{
@@ -113,6 +98,12 @@ void Connection::setRecvTimeout(const time_t sec, const suseconds_t usec) {
     if (setsockopt(fd_, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
         throw EpollServerException{"Set recv timeout error"};
     }
+}
+
+void Connection::clearBuffers() noexcept {
+    write_buffer_.clear();
+    read_buffer_.clear();
+    written_ = 0;
 }
 
 void Connection::close() noexcept {

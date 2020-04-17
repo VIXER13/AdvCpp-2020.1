@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
                     std::string message(READ_SIZE - connection.getReadBuffer().size(), '\0');
                     size_t readed = connection.read(message.data(), message.size());
                     message.resize(readed);
-                    connection.appendToReadBuffer(message);
+                    connection.getReadBuffer() += message;
 
                     // Более остроумного сценария выхода я не придумал
                     if (connection.getReadBuffer().find("close") != std::string::npos) {
@@ -44,19 +44,13 @@ int main(int argc, char** argv) {
                                   << connection.getPort() << std::endl;
 
                         // Делаем вид, что обработали данные и подготовили ответ
-                        connection.setWriteBuffer("test answer");
+                        connection.getWriteBuffer() = "test answer";
                     }
                 }
-                
+
                 if (connection.getReadBuffer().size() == READ_SIZE && connection.getEvents() & EPOLLOUT) {
-                    size_t written = connection.write(connection.getWriteBuffer().c_str() + connection.getWritten(),
-                                                      connection.getWriteBuffer().size()  - connection.getWritten());
-                    connection.setWritten(connection.getWritten() + written);
-                    if (connection.getWritten() == connection.getWriteBuffer().size()) {
-                        // Очищаем для повтора
-                        connection.setWritten(0);
-                        connection.setWriteBuffer("");
-                        connection.clearReadBuffer();
+                    if (connection.writeBufferExact()) {
+                        connection.clearBuffers(); // Чистим буфер для повтора
                     }
                 }
             });
