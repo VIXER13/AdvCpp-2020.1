@@ -7,6 +7,12 @@ namespace shmem {
 
 template<class T>
 class Allocator {
+    template<class U>
+    friend class Allocator;
+
+    ShmemUniquePtr& pool_;
+    size_t offset_ = 0;
+
  public:
     using value_type = T;
     using pointer = T*;
@@ -22,7 +28,13 @@ class Allocator {
 
     Allocator(ShmemUniquePtr& pool) noexcept :
         pool_(pool) {}
-    Allocator(const Allocator& other) noexcept = default;
+
+    Allocator(const Allocator<T>& other) noexcept = default;
+
+    template<class U>
+    Allocator(const Allocator<U>& other) noexcept :
+        pool_(other.pool_), offset_(other.offset_) {}
+
     ~Allocator() noexcept = default;
 
     pointer allocate(size_type n) {
@@ -34,10 +46,10 @@ class Allocator {
         return std::next(static_cast<pointer>(pool_.get()), offset_ - n);
     }
 
-    void deallocate(pointer p, size_type n) {}
+    void deallocate([[maybe_unused]] pointer p, [[maybe_unused]] size_type n) {}
 
     size_type max_size() const noexcept {
-        pool_.get_deleter().getSize();
+        return pool_.get_deleter().getSize() / sizeof(T);
     }
 
     //template<class U, class... Args>
@@ -47,10 +59,6 @@ class Allocator {
     friend bool operator==(const Allocator<T>& left, const Allocator<U>& right) noexcept;
     template <class U>
     friend bool operator!=(const Allocator<T>& left, const Allocator<U>& right) noexcept;
-
- private:
-    ShmemUniquePtr& pool_;
-    size_t offset_ = 0;
 };
 
 template <class T, class U>

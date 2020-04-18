@@ -1,34 +1,30 @@
 #include <iostream>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <memory>
-#include <sys/mman.h>
 #include <thread>
 #include <vector>
-#include <iterator>
+#include <map>
 #include "allocator.hpp"
+
+template<class T>
+using Map = std::map<T, T, std::less<T>, shmem::Allocator<std::pair<const T, T>>>;
 
 int main() {
     auto shared_memory = shmem::makeShmemUniquePtr(2048);
-    auto shmem = shmem::makeShmemUniquePtr(sizeof(std::vector<int, shmem::Allocator<int>>));
-    std::vector<int, shmem::Allocator<int>>* vector =
-        reinterpret_cast<std::vector<int, shmem::Allocator<int>>*>(shmem.get());
-    shmem::Allocator<int> alloc(shared_memory);
-    vector = new (vector) std::vector<int, shmem::Allocator<int>>{alloc};
+    auto mapmem = shmem::makeShmemUniquePtr(sizeof(std::map<int, int, std::less<int>, shmem::Allocator<std::pair<const int, int>>>));
+    auto map = static_cast<std::map<int, int, std::less<int>, shmem::Allocator<std::pair<const int, int>>>*>(mapmem.get());
+    shmem::Allocator<std::pair<const int, int>> alloc(shared_memory);
+    map = new (map) std::map<int, int, std::less<int>, shmem::Allocator<std::pair<const int, int>>>{alloc};
 
     pid_t child = fork();
     if (child) {
-        vector->push_back(1);
-        vector->push_back(1);
-        vector->push_back(1);
+        map->emplace(1, 1);
     } else {
         using namespace std::literals;
         std::this_thread::sleep_for(1s);
-        vector->push_back(2);
-        vector->push_back(2);
-        vector->push_back(2);
-        for(size_t i = 0; i < vector->size(); ++i) {
-            std::cout << (*vector)[i] << " ";
+        map->emplace(2, 2);
+        for(const auto& it : *map) {
+            std::cout << it.first << " " << it.second << std::endl;
         }
         std::cout << std::endl;
     }
