@@ -3,6 +3,14 @@
 #include "TcpException.hpp"
 #include "Server.hpp"
 
+namespace tcp {
+
+static constexpr size_t ADDRESS       = 1,
+                        PORT          = 2,
+                        MAX_CONNECTED = 3;
+
+}  // namespace tcp
+
 int main(int argc, char** argv) {
     if (argc < 4) {
         std::cerr << "Incorrect input! Please, input adress, port and max connection." << std::endl;
@@ -10,7 +18,7 @@ int main(int argc, char** argv) {
     }
 
     try {
-        tcp::Server server(argv[1], static_cast<uint16_t>(std::stoul(argv[2])), atoi(argv[3]));
+        tcp::Server server(argv[tcp::ADDRESS], uint16_t(std::stoul(argv[tcp::PORT])), std::atoi(argv[tcp::MAX_CONNECTED]));
         tcp::Connection test_connect = server.accept();
         test_connect.setRecvTimeout(1);
         test_connect.setSendTimeout(1);
