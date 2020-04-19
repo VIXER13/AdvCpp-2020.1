@@ -10,7 +10,7 @@ class ShmemUniquePtrDeleter {
 
  public:
     ShmemUniquePtrDeleter(const size_t size) noexcept;
-    size_t getSize() const noexcept;
+    size_t getBufferSize() const noexcept;
     void operator()(void* ptr) noexcept;
 };
 

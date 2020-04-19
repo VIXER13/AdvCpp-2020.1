@@ -6,7 +6,7 @@ namespace shmem {
 ShmemUniquePtrDeleter::ShmemUniquePtrDeleter(const size_t size) noexcept :
     size_(size) {}
 
-size_t ShmemUniquePtrDeleter::getSize() const noexcept {
+size_t ShmemUniquePtrDeleter::getBufferSize() const noexcept {
     return size_;
 }
 
