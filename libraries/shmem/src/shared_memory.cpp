@@ -1,5 +1,6 @@
 #include "shared_memory.hpp"
 #include <sys/mman.h>
+#include "shmem_exception.hpp"
 
 namespace shmem {
 
@@ -17,7 +18,7 @@ void ShmemUniquePtrDeleter::operator()(void* ptr) noexcept {
 ShmemUniquePtr makeShmemUniquePtr(const size_t size) {
     void* mmap = ::mmap(nullptr, size, PROT_WRITE | PROT_READ, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     if (mmap == MAP_FAILED) {
-        throw std::bad_alloc{};
+        throw ShmemException{"mmap failed"};
     }
     return {mmap, ShmemUniquePtrDeleter{size}};
 }

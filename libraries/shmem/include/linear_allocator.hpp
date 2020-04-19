@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include "shared_memory.hpp"
+#include "shmem_exception.hpp"
 
 namespace shmem {
 
@@ -29,8 +30,8 @@ class LinearAllocator {
 
     LinearAllocator(ShmemUniquePtr& pool, const size_t offset_bytes = 0) :
         pool_(pool), offset_bytes_(offset_bytes) {
-        if (offset_bytes_ > pool_.get_deleter().getBufferSize() || !pool_.get_deleter().getBufferSize()) {
-            throw std::bad_alloc{};
+        if (offset_bytes_ > pool_.get_deleter().getBufferSize()) {
+            throw ShmemException{"offset is greater than buffer"};
         }
     }
 
@@ -40,19 +41,17 @@ class LinearAllocator {
     LinearAllocator(const LinearAllocator<U>& other) noexcept :
         pool_(other.pool_), offset_bytes_(other.offset_bytes_) {}
 
-    ~LinearAllocator() noexcept = default;
-
     pointer allocate(const size_type n) {
         if (size_type(pool_.get()) + offset_bytes_ + n * sizeof(T) >
             size_type(pool_.get()) + pool_.get_deleter().getBufferSize()) {
-            throw std::bad_alloc{};
+            throw ShmemException{"Shmem bad alloc"};
         }
         offset_bytes_ += n * sizeof(T);
         return reinterpret_cast<pointer>(size_type(pool_.get()) + offset_bytes_ - n * sizeof(T));
     }
 
     void deallocate(pointer p, size_type n) {
-        memset(p, 0, n * sizeof(T)); // Считаем, что работаем с POD-типами, поэтому просто обнуляем их
+        ::memset(p, 0, n * sizeof(T)); // Считаем, что работаем с POD-типами, поэтому просто обнуляем их
     }
 
     size_type max_size() const noexcept {
