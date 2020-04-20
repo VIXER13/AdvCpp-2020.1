@@ -16,19 +16,19 @@ class LinearAllocator {
     size_t offset_bytes_ = 0;
 
  public:
-    using value_type = T;
-    using pointer = T*;
-    using const_pointer = const T*;
-    using reference = T&;
-    using const_reference = const T&;
-    using size_type = std::size_t;
+    using size_type       = std::size_t;
     using difference_type = std::ptrdiff_t;
+    using value_type      = T;
+    using pointer         = T*;
+    using const_pointer   = const T*;
+    using reference       = T&;
+    using const_reference = const T&;
     template<typename U>
 	struct rebind {
         using other = LinearAllocator<U>;
     };
 
-    LinearAllocator(ShmemUniquePtr& pool, const size_t offset_bytes = 0) :
+    explicit LinearAllocator(ShmemUniquePtr& pool, const size_t offset_bytes = 0) :
         pool_(pool), offset_bytes_(offset_bytes) {
         if (offset_bytes_ > pool_.get_deleter().getBufferSize()) {
             throw ShmemException{"offset is greater than buffer"};
@@ -58,22 +58,23 @@ class LinearAllocator {
         return pool_.get_deleter().getBufferSize() / sizeof(T);
     }
 
+    // У POD-типов нет конструкторов, оставлю на случай модернизации класса
     //template<class U, class... Args>
     //void construct(U* p, Args&&... args) {}
 
     template <class U>
-    friend bool operator==(const LinearAllocator<T>& left, const LinearAllocator<U>& right) noexcept;
+    friend bool operator==(const LinearAllocator<T>& left, const LinearAllocator<U>& right);
     template <class U>
-    friend bool operator!=(const LinearAllocator<T>& left, const LinearAllocator<U>& right) noexcept;
+    friend bool operator!=(const LinearAllocator<T>& left, const LinearAllocator<U>& right);
 };
 
 template <class T, class U>
-bool operator==(const LinearAllocator<T>& left, const LinearAllocator<U>& right) noexcept {
+bool operator==(const LinearAllocator<T>& left, const LinearAllocator<U>& right) {
     return left.pool_ == right.pool_;
 }
 
 template <class T, class U>
-bool operator!=(const LinearAllocator<T>& left, const LinearAllocator<U>& right) noexcept {
+bool operator!=(const LinearAllocator<T>& left, const LinearAllocator<U>& right) {
     return !(left == right);
 }
 

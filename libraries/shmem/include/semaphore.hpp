@@ -16,7 +16,7 @@ class Semaphore {
     Semaphore(Semaphore&& other) = default;
     Semaphore& operator=(Semaphore&& other) = default;
 
-    Semaphore(const unsigned int init_value = 1);
+    explicit Semaphore(const unsigned int init_value = 1);
     ~Semaphore() noexcept;
 
     void wait();
@@ -32,7 +32,7 @@ class SemaphoreLock {
     SemaphoreLock& operator=(SemaphoreLock&& other) = delete;
 
  public:
-    SemaphoreLock(Semaphore& semaphore);
+    explicit SemaphoreLock(Semaphore& semaphore);
     ~SemaphoreLock();
 };
 

@@ -1,25 +1,94 @@
 #include <iostream>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <thread>
-#include <semaphore.h>
 #include "shmap.hpp"
-#include <vector>
 
-int main() {
-    shmem::ShMap<int, int> map(2048);
+bool testInsert(shmem::ShMap<size_t, size_t>& sequence_map, shmem::ShMap<size_t, size_t>& parallel_map) {
+    for(size_t i = 0; i < 1024*1024; ++i) {
+        sequence_map.insert({i, i});
+    }
+
     pid_t child = fork();
     if (child) {
-        //for(size_t i = 0; i < 1000; ++i)
-            map.insert({1, 1});
+        for(size_t i = 0; i < 1024*1024; i += 2) {
+            parallel_map.insert({i, i});
+        }
     } else {
-        //using namespace std::literals;
-        //std::this_thread::sleep_for(1s);
-        map.insert({0, 0});
-        std::cout << map.at(1) << " " << map.at(2) << std::endl;
+        for(size_t i = 1; i < 1024*1024; i += 2) {
+            parallel_map.insert({i, i});
+        }
+        exit(0);
     }
 
     waitpid(child, nullptr, 0);
+
+    return sequence_map == parallel_map;
+}
+
+bool testAt(shmem::ShMap<size_t, size_t>& sequence_map, shmem::ShMap<size_t, size_t>& parallel_map) {
+    for (auto& it : sequence_map) {
+        it.second = it.first + 1;
+    }
+
+    pid_t child = fork();
+    if (child) {
+        for(size_t i = 0; i < 1024*1024; i += 2) {
+            parallel_map.at(i) = i + 1;
+        }
+    } else {
+        for(size_t i = 1; i < 1024*1024; i += 2) {
+            parallel_map.at(i) = i + 1;
+        }
+        exit(0);
+    }
+
+    waitpid(child, nullptr, 0);
+
+    return sequence_map == parallel_map;
+}
+
+bool testErase(shmem::ShMap<size_t, size_t>& sequence_map, shmem::ShMap<size_t, size_t>& parallel_map) {
+    for(size_t i = 0; i < 1024*1024; i += 2) {
+        sequence_map.erase(i);
+    }
+
+    pid_t child = fork();
+    if (child) {
+        for(size_t i = 0; i < 1024*1024; i += 4) {
+            parallel_map.erase(i);
+        }
+    } else {
+        for(size_t i = 2; i < 1024*1024; i += 4) {
+            parallel_map.erase(i);
+        }
+        exit(0);
+    }
+
+    waitpid(child, nullptr, 0);
+
+    return sequence_map == parallel_map;
+}
+
+int main() {
+    shmem::ShMap<size_t, size_t> sequence_map(1024*1024*1024), parallel_map(1024*1024*1024);
+
+    if (testInsert(sequence_map, parallel_map)) {
+        std::cout << "Insert is ok!" << std::endl;
+    } else {
+        std::cerr << "Insert is not ok!" << std::endl;
+    }
+
+    if (testAt(sequence_map, parallel_map)) {
+        std::cout << "At is ok!" << std::endl;
+    } else {
+        std::cerr << "At is not ok!" << std::endl;
+    }
+
+    if (testErase(sequence_map, parallel_map)) {
+        std::cout << "Erase is ok!" << std::endl;
+    } else {
+        std::cerr << "Erase is not ok!" << std::endl;
+    }
 
     return EXIT_SUCCESS;
 }
