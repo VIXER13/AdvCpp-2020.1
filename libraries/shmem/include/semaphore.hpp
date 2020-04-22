@@ -19,21 +19,8 @@ class Semaphore {
     explicit Semaphore(const unsigned int init_value = 1);
     ~Semaphore() noexcept;
 
-    void wait();
-    void post();
-};
-
-class SemaphoreLock {
-    Semaphore& semaphore_;
-
-    SemaphoreLock(const SemaphoreLock&) = delete;
-    SemaphoreLock& operator=(const SemaphoreLock&) = delete;
-    SemaphoreLock(SemaphoreLock&& other) = delete;
-    SemaphoreLock& operator=(SemaphoreLock&& other) = delete;
-
- public:
-    explicit SemaphoreLock(Semaphore& semaphore);
-    ~SemaphoreLock();
+    void lock();
+    void unlock();
 };
 
 }  // namespace shmem

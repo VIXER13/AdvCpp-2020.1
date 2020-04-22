@@ -13,7 +13,7 @@ Semaphore::~Semaphore() noexcept {
     ::sem_destroy(&semaphore_);
 }
 
-void Semaphore::wait() {
+void Semaphore::lock() {
     while (::sem_wait(&semaphore_) == -1) {
         if (errno == EINTR) {
             continue;
@@ -22,19 +22,10 @@ void Semaphore::wait() {
     }
 }
 
-void Semaphore::post() {
+void Semaphore::unlock() {
     if (::sem_post(&semaphore_) == -1) {
         throw ShmemException{"post failed"};
     }
-}
-
-SemaphoreLock::SemaphoreLock(Semaphore& semaphore) :
-    semaphore_(semaphore) {
-    semaphore_.wait();
-}
-
-SemaphoreLock::~SemaphoreLock() {
-    semaphore_.post();
 }
 
 }  // namespace shmem
