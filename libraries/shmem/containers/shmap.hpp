@@ -28,13 +28,15 @@ class ShMap {
     using reverse_iterator       = typename map_type::reverse_iterator;
     using const_reverse_iterator = typename map_type::const_reverse_iterator;
 
-    ShMap(const size_t reserve_bytes = sizeof(map_type) + sizeof(Semaphore)) :
+    ShMap(const size_t reserve_bytes) :
         memory_(shmem::makeShmemUniquePtr(reserve_bytes)) {
-        allocator_type alloc(memory_, sizeof(map_type) + sizeof(Semaphore));
-        map_type* map = &getMap();
-        map = new (map) map_type{alloc};
-        Semaphore* semaphore = &getSemaphore();
-        semaphore = new (semaphore) Semaphore{};
+        shmem::LinearAllocator<Semaphore> semaphore_alloc{memory_};
+        semaphore_ = semaphore_alloc.allocate(1);
+        semaphore_alloc.construct(semaphore_);
+        shmem::LinearAllocator<map_type> map_alloc{semaphore_alloc};
+        map_ = map_alloc.allocate(1);
+        //allocator_type alloc{map_alloc};
+        map_alloc.construct(map_, map_alloc);
     }
 
     ShMap(ShMap&&) = default;
@@ -44,230 +46,230 @@ class ShMap {
     // Доступ к элементам
 
     T& at(const Key& key) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap().at(key);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->at(key);
     }
 
     const T& at(const Key& key) const {
-        std::lock_guard<Semaphore> lock(const_cast<Semaphore&>(getSemaphore()));
-        return getMap().at(key);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->at(key);
     }
 
     T& operator[](const Key& key) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap()[key];
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return (*map_)[key];
     }
 
     T& operator[](Key&& key) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap()[std::move(key)];
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return (*map_)[std::move(key)];
     }
 
     // Итераторы
 
     iterator begin() {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap().begin();
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->begin();
     }
 
     const_iterator begin() const  {
-        std::lock_guard<Semaphore> lock(const_cast<Semaphore&>(getSemaphore()));
-        return getMap().begin();
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->begin();
     }
 
     const_iterator cbegin() const  {
-        std::lock_guard<Semaphore> lock(const_cast<Semaphore&>(getSemaphore()));
-        return getMap().cbegin();
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->cbegin();
     }
 
     iterator end() {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap().end();
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->end();
     }
 
     const_iterator end() const {
-        std::lock_guard<Semaphore> lock(const_cast<Semaphore&>(getSemaphore()));
-        return getMap().end();
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->end();
     }
 
     const_iterator cend() const {
-        std::lock_guard<Semaphore> lock(const_cast<Semaphore&>(getSemaphore()));
-        return getMap().cend();
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->cend();
     }
 
     reverse_iterator rbegin() {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap().rbegin();
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->rbegin();
     }
 
     const_reverse_iterator rbegin() const {
-        std::lock_guard<Semaphore> lock(const_cast<Semaphore&>(getSemaphore()));
-        return getMap().rbegin();
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->rbegin();
     }
 
     const_reverse_iterator crbegin() const {
-        std::lock_guard<Semaphore> lock(const_cast<Semaphore&>(getSemaphore()));
-        return getMap().crbegin();
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->crbegin();
     }
 
     reverse_iterator rend() {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap().rend();
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->rend();
     }
 
     const_reverse_iterator rend() const {
-        std::lock_guard<Semaphore> lock(const_cast<Semaphore&>(getSemaphore()));
-        return getMap().rend();
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->rend();
     }
 
     const_reverse_iterator crend() const {
-        std::lock_guard<Semaphore> lock(const_cast<Semaphore&>(getSemaphore()));
-        return getMap().crend();
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->crend();
     }
 
     // Ёмкость
 
     bool empty() const {
-        std::lock_guard<Semaphore> lock(const_cast<Semaphore&>(getSemaphore()));
-        return getMap().empty();
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->empty();
     }
 
     size_type size() const {
-        std::lock_guard<Semaphore> lock(const_cast<Semaphore&>(getSemaphore()));
-        return getMap().size();
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->size();
     }
 
     size_type max_size() const {
-        return getMap().max_size();
+        return map_->max_size();
     }
 
     // Изменение
 
     void clear() {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        getMap().clear();
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        map_->clear();
     }
 
     std::pair<iterator,bool> insert(const value_type& value) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap().insert(value);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->insert(value);
     }
 
     template<class P>
     std::pair<iterator,bool> insert(P&& value) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap().insert(std::move(value));
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->insert(std::move(value));
     }
 
     iterator insert(const_iterator hint, const value_type& value) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap().insert(hint, value);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->insert(hint, value);
     }
 
     template<class P>
     iterator insert(const_iterator hint, P&& value) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap().insert(hint, std::move(value));
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->insert(hint, std::move(value));
     }
 
     template<class InputIt>
     void insert(InputIt first, InputIt last) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        getMap().insert(first, last);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        map_->insert(first, last);
     }
 
     void insert(std::initializer_list<value_type> ilist) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        getMap().insert(ilist);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        map_->insert(ilist);
     }
 
     template<class... Args>
     std::pair<iterator, bool> emplace(Args&&... args) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap().emplace(std::forward<Args>(args)...);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->emplace(std::forward<Args>(args)...);
     }
 
     template <class... Args>
     iterator emplace_hint(const_iterator hint, Args&&... args) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap().emplace_hint(hint, std::forward<Args>(args)...);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->emplace_hint(hint, std::forward<Args>(args)...);
     }
 
     iterator erase(const_iterator position) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap().erase(position);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->erase(position);
     }
 
     iterator erase(const_iterator first, const_iterator last) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap().erase(first, last);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->erase(first, last);
     }
 
     size_type erase(const key_type& key) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap().erase(key);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->erase(key);
     }
 
     void swap(ShMap& other) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
+        std::lock_guard<Semaphore> lock(*semaphore_);
         std::swap(memory_, other.memory_);
     }
 
     // Поиск
 
     size_type count(const Key& key) const {
-        std::lock_guard<Semaphore> lock(const_cast<Semaphore&>(getSemaphore()));
-        return getMap().count(key);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->count(key);
     }
 
     iterator find(const Key& key) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap().find(key);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->find(key);
     }
 
     const_iterator find(const Key& key) const {
-        std::lock_guard<Semaphore> lock(const_cast<Semaphore&>(getSemaphore()));
-        return getMap().find(key);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->find(key);
     }
 
     std::pair<iterator, iterator> equal_range(const Key& key) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap().equal_range(key);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->equal_range(key);
     }
 
     std::pair<const_iterator, const_iterator> equal_range(const Key& key) const {
-        std::lock_guard<Semaphore> lock(const_cast<Semaphore&>(getSemaphore()));
-        return getMap().equal_range(key);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->equal_range(key);
     }
 
     iterator lower_bound(const Key& key) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap().lower_bound(key);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->lower_bound(key);
     }
 
     const_iterator lower_bound(const Key& key) const {
-        std::lock_guard<Semaphore> lock(const_cast<Semaphore&>(getSemaphore()));
-        return getMap().lower_bound(key);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->lower_bound(key);
     }
 
     iterator upper_bound(const Key& key) {
-        std::lock_guard<Semaphore> lock(getSemaphore());
-        return getMap().upper_bound(key);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->upper_bound(key);
     }
 
     const_iterator upper_bound(const Key& key) const {
-        std::lock_guard<Semaphore> lock(const_cast<Semaphore&>(getSemaphore()));
-        return getMap().upper_bound(key);
+        std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->upper_bound(key);
     }
 
     // Наблюдатели
 
     key_compare key_comp() const {
-        return getMap().key_comp();
+        return map_->key_comp();
     }
 
     typename map_type::value_compare value_comp() const {
-        return getMap().value_comp();
+        return map_->value_comp();
     }
 
     template<class Key_, class T_, class Compare_>
@@ -288,70 +290,49 @@ class ShMap {
 
  private:
     ShmemUniquePtr memory_;
-
-    map_type& getMap() {
-        return *static_cast<map_type*>(memory_.get());
-    }
-
-    const map_type& getMap() const {
-        return *static_cast<const map_type*>(memory_.get());
-    }
-
-    Semaphore& getSemaphore() {
-        return *reinterpret_cast<Semaphore*>(size_type(memory_.get()) + sizeof(map_type));
-    }
-
-    const Semaphore& getSemaphore() const {
-        return *reinterpret_cast<const Semaphore*>(size_type(memory_.get()) + sizeof(map_type));
-    }
+    mutable Semaphore* semaphore_ = nullptr;
+    map_type* map_ = nullptr;
 };
 
 template<class Key, class T, class Compare>
 bool operator==(const ShMap<Key, T, Compare>& left, const ShMap<Key, T, Compare>& right) {
-    std::lock_guard<Semaphore> lock_left (const_cast<ShMap<Key, T, Compare>&>(left ).getSemaphore()),
-                               lock_right(const_cast<ShMap<Key, T, Compare>&>(right).getSemaphore());
-    return left.getMap() == right.getMap();
+    std::lock_guard<Semaphore> lock_left(*left.semaphore_), lock_right(*right.semaphore_);
+    return *left.map_ == *right.map_;
 }
 
 template<class Key, class T, class Compare>
 bool operator!=(const ShMap<Key, T, Compare>& left, const ShMap<Key, T, Compare>& right) {
-    std::lock_guard<Semaphore> lock_left (const_cast<ShMap<Key, T, Compare>&>(left ).getSemaphore()),
-                               lock_right(const_cast<ShMap<Key, T, Compare>&>(right).getSemaphore());
-    return left.getMap() != right.getMap();
+    std::lock_guard<Semaphore> lock_left(*left.semaphore_), lock_right(*right.semaphore_);
+    return *left.map_ != *right.map_;
 }
 
 template<class Key, class T, class Compare>
 bool operator<(const ShMap<Key, T, Compare>& left, const ShMap<Key, T, Compare>& right) {
-    std::lock_guard<Semaphore> lock_left (const_cast<ShMap<Key, T, Compare>&>(left ).getSemaphore()),
-                               lock_right(const_cast<ShMap<Key, T, Compare>&>(right).getSemaphore());
-    return left.getMap() < right.getMap();
+    std::lock_guard<Semaphore> lock_left(*left.semaphore_), lock_right(*right.semaphore_);
+    return *left.map_ < *right.map_;
 }
 
 template<class Key, class T, class Compare>
 bool operator<=(const ShMap<Key, T, Compare>& left, const ShMap<Key, T, Compare>& right) {
-    std::lock_guard<Semaphore> lock_left (const_cast<ShMap<Key, T, Compare>&>(left ).getSemaphore()),
-                               lock_right(const_cast<ShMap<Key, T, Compare>&>(right).getSemaphore());
-    return left.getMap() <= right.getMap();
+    std::lock_guard<Semaphore> lock_left(*left.semaphore_), lock_right(*right.semaphore_);
+    return *left.map_ <= *right.map_;
 }
 
 template<class Key, class T, class Compare>
 bool operator>(const ShMap<Key, T, Compare>& left, const ShMap<Key, T, Compare>& right) {
-    std::lock_guard<Semaphore> lock_left (const_cast<ShMap<Key, T, Compare>&>(left ).getSemaphore()),
-                               lock_right(const_cast<ShMap<Key, T, Compare>&>(right).getSemaphore());
-    return left.getMap() > right.getMap();
+    std::lock_guard<Semaphore> lock_left(*left.semaphore_), lock_right(*right.semaphore_);
+    return *left.map_ > *right.map_;
 }
 
 template<class Key, class T, class Compare>
 bool operator>=(const ShMap<Key, T, Compare>& left, const ShMap<Key, T, Compare>& right) {
-    std::lock_guard<Semaphore> lock_left (const_cast<ShMap<Key, T, Compare>&>(left ).getSemaphore()),
-                               lock_right(const_cast<ShMap<Key, T, Compare>&>(right).getSemaphore());
-    return left.getMap() >= right.getMap();
+    std::lock_guard<Semaphore> lock_left(*left.semaphore_), lock_right(*right.semaphore_);
+    return *left.map_ >= *right.map_;
 }
 
 template<class Key, class T, class Compare>
 void swap(ShMap<Key, T, Compare>& left, ShMap<Key, T, Compare>& right) {
-    std::lock_guard<Semaphore> lock_left (left .getSemaphore()),
-                               lock_right(right.getSemaphore());
+    std::lock_guard<Semaphore> lock_left(*left.semaphore_), lock_right(*right.semaphore_);
     left.swap(right);
 }
 

@@ -76,7 +76,7 @@ bool testErase(shmem::ShMap<size_t, size_t>& sequence_map, shmem::ShMap<size_t, 
 
 int main() {
     shmem::ShMap<size_t, size_t> sequence_map(size_t(Size::GBYTE)), parallel_map(size_t(Size::GBYTE));
-
+    
     if (testInsert(sequence_map, parallel_map)) {
         std::cout << "Insert is ok!" << std::endl;
     } else {

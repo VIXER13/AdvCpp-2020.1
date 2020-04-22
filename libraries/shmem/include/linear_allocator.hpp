@@ -12,6 +12,7 @@ class LinearAllocator {
     template<class U>
     friend class LinearAllocator;
 
+ public:
     ShmemUniquePtr& pool_;
     size_t offset_bytes_ = 0;
 
@@ -28,8 +29,8 @@ class LinearAllocator {
         using other = LinearAllocator<U>;
     };
 
-    explicit LinearAllocator(ShmemUniquePtr& pool, const size_t offset_bytes = 0) :
-        pool_(pool), offset_bytes_(offset_bytes) {
+    explicit LinearAllocator(ShmemUniquePtr& pool) :
+        pool_(pool) {
         if (offset_bytes_ > pool_.get_deleter().getBufferSize()) {
             throw ShmemException{"offset is greater than buffer"};
         }
@@ -58,9 +59,10 @@ class LinearAllocator {
         return pool_.get_deleter().getBufferSize() / sizeof(T);
     }
 
-    // У POD-типов нет конструкторов, оставлю на случай модернизации класса
-    //template<class U, class... Args>
-    //void construct(U* p, Args&&... args) {}
+    template<class U, class... Args>
+    void construct(U* p, Args&&... args) {
+        p = new (p) U{std::forward<Args>(args)...};
+    }
 
     template <class U>
     friend bool operator==(const LinearAllocator<T>& left, const LinearAllocator<U>& right);
