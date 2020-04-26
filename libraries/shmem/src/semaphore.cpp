@@ -22,6 +22,18 @@ void Semaphore::lock() {
     }
 }
 
+bool Semaphore::try_lock() {
+    while (::sem_trywait(&semaphore_) == -1) {
+        if (errno == EINTR) {
+            continue;
+        } else if (errno == EAGAIN) {
+            return false;
+        }
+        throw ShmemException{"Trywait error"};
+    }
+    return true;
+}
+
 void Semaphore::unlock() {
     if (::sem_post(&semaphore_) == -1) {
         throw ShmemException{"post failed"};

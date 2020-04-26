@@ -20,6 +20,7 @@ class Semaphore {
     ~Semaphore() noexcept;
 
     void lock();
+    bool try_lock();
     void unlock();
 };
 
