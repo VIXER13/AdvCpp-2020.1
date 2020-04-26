@@ -18,16 +18,8 @@ class LinearAllocator {
 
  public:
     using size_type       = std::size_t;
-    using difference_type = std::ptrdiff_t;
     using value_type      = T;
     using pointer         = T*;
-    using const_pointer   = const T*;
-    using reference       = T&;
-    using const_reference = const T&;
-    template<typename U>
-	struct rebind {
-        using other = LinearAllocator<U>;
-    };
 
     explicit LinearAllocator(ShmemUniquePtr& pool) :
         pool_(pool) {
@@ -52,16 +44,9 @@ class LinearAllocator {
     }
 
     void deallocate(pointer p, size_type n) {
-        ::memset(p, 0, n * sizeof(T)); // Считаем, что работаем с POD-типами, поэтому просто обнуляем их
-    }
-
-    size_type max_size() const noexcept {
-        return pool_.get_deleter().getBufferSize() / sizeof(T);
-    }
-
-    template<class U, class... Args>
-    void construct(U* p, Args&&... args) {
-        p = new (p) U{std::forward<Args>(args)...};
+        if (size_type(p) - n * sizeof(T) == size_type(pool_.get())) {
+            offset_bytes_ = 0;
+        }
     }
 
     template <class U>

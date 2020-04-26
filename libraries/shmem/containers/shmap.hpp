@@ -21,21 +21,21 @@ class ShMap {
     using const_reference        = const value_type&;
     using allocator_type         = shmem::LinearAllocator<value_type>;
     using map_type               = std::map<key_type, mapped_type, key_compare, allocator_type>;
-    using pointer                = typename allocator_type::pointer;
-    using const_pointer          = typename allocator_type::const_pointer;
+    using pointer                = typename std::allocator_traits<allocator_type>::pointer;
+    using const_pointer          = typename std::allocator_traits<allocator_type>::const_pointer;
     using iterator               = typename map_type::iterator;
     using const_iterator         = typename map_type::const_iterator;
-    using reverse_iterator       = typename map_type::reverse_iterator;
-    using const_reverse_iterator = typename map_type::const_reverse_iterator;
+    using reverse_iterator       = typename std::reverse_iterator<iterator>;
+    using const_reverse_iterator = typename std::reverse_iterator<const_iterator>;
 
-    ShMap(const size_t reserve_bytes) :
+    explicit ShMap(const size_t reserve_bytes) :
         memory_(shmem::makeShmemUniquePtr(reserve_bytes)) {
         shmem::LinearAllocator<Semaphore> semaphore_alloc{memory_};
         semaphore_ = semaphore_alloc.allocate(1);
-        semaphore_alloc.construct(semaphore_);
+        std::allocator_traits<shmem::LinearAllocator<Semaphore>>::construct(semaphore_alloc, semaphore_);
         shmem::LinearAllocator<map_type> map_alloc{semaphore_alloc};
         map_ = map_alloc.allocate(1);
-        map_alloc.construct(map_, map_alloc);
+        std::allocator_traits<shmem::LinearAllocator<map_type>>::construct(map_alloc, map_, map_alloc);
     }
 
     ShMap(ShMap&&) = default;
@@ -54,12 +54,32 @@ class ShMap {
         return map_->at(key);
     }
 
+    T atSafe(const Key& key) {
+        const std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->at(key);
+    }
+
+    const T atSafe(const Key& key) const {
+        const std::lock_guard<Semaphore> lock(*semaphore_);
+        return map_->at(key);
+    }
+
     T& operator[](const Key& key) {
         const std::lock_guard<Semaphore> lock(*semaphore_);
         return (*map_)[key];
     }
 
     T& operator[](Key&& key) {
+        const std::lock_guard<Semaphore> lock(*semaphore_);
+        return (*map_)[std::move(key)];
+    }
+
+    T operator()(const Key& key) {
+        const std::lock_guard<Semaphore> lock(*semaphore_);
+        return (*map_)[key];
+    }
+
+    T operator()(Key&& key) {
         const std::lock_guard<Semaphore> lock(*semaphore_);
         return (*map_)[std::move(key)];
     }
