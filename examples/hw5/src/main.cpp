@@ -2,6 +2,14 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include "shmap.hpp"
+#include <string>
+
+namespace shmem {
+
+template <class CharT>
+using string = std::basic_string<CharT, std::char_traits<CharT>, LinearAllocator<CharT>>;
+
+}
 
 enum class Size : size_t {KBYTE = 1024,
                           MBYTE = 1024*KBYTE,
@@ -74,6 +82,30 @@ bool testErase(shmem::ShMap<size_t, size_t>& sequence_map, shmem::ShMap<size_t, 
     return sequence_map == parallel_map;
 }
 
+bool stringTest() {
+    shmem::ShMap<size_t, shmem::string<char>> 
+        sequence_map(size_t(Size::GBYTE)), parallel_map(size_t(Size::GBYTE));
+
+    sequence_map.emplace(1, "qazxswedcvfrtgbnhyujm,kiol./;p[']");
+    sequence_map.emplace(2, "]'/.;[pl,mkoijnbhuygvcftrdxzsewaq");
+    sequence_map.emplace(3, "qazxswedcvfrtgbnhyujm,kiol./;p[']");
+    sequence_map.emplace(4, "]'/.;[pl,mkoijnbhuygvcftrdxzsewaq");
+
+    pid_t child = fork();
+    if (child) {
+        parallel_map.emplace(1, "qazxswedcvfrtgbnhyujm,kiol./;p[']");
+        parallel_map.emplace(3, "]'/.;[pl,mkoijnbhuygvcftrdxzsewaq");
+    } else {
+        parallel_map.emplace(2, "]'/.;[pl,mkoijnbhuygvcftrdxzsewaq");
+        parallel_map.emplace(4, "qazxswedcvfrtgbnhyujm,kiol./;p[']");
+        exit(0);
+    }
+
+    waitpid(child, nullptr, 0);
+
+    return sequence_map == parallel_map;
+}
+
 int main() {
     shmem::ShMap<size_t, size_t> sequence_map(size_t(Size::GBYTE)), parallel_map(size_t(Size::GBYTE));
     
@@ -93,6 +125,12 @@ int main() {
         std::cout << "Erase is ok!" << std::endl;
     } else {
         std::cerr << "Erase is not ok!" << std::endl;
+    }
+
+    if (stringTest()) {
+        std::cout << "String test is ok!" << std::endl;
+    } else {
+        std::cerr << "String test is not ok!" << std::endl;
     }
 
     return EXIT_SUCCESS;
