@@ -16,11 +16,13 @@ add_subdirectory(libraries/logger)
 add_subdirectory(libraries/tcp)
 add_subdirectory(libraries/shmem)
 add_subdirectory(libraries/epoll_server)
+add_subdirectory(libraries/http_framework)
 
 #EXAMPLES
 
 add_subdirectory(examples/hw1)
 add_subdirectory(examples/hw2)
 add_subdirectory(examples/hw3)
-add_subdirectory(examples/hw5)
 add_subdirectory(examples/hw4)
+add_subdirectory(examples/hw5)
+add_subdirectory(examples/hw6)
